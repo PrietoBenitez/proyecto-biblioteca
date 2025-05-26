@@ -1,0 +1,169 @@
+document.addEventListener('DOMContentLoaded', function() {
+    const tablaSocios = document.getElementById('tablaSocios');
+    const formSocio = document.getElementById('formSocio');
+    const modalSocio = new bootstrap.Modal(document.getElementById('modalSocio'));
+    
+    // Cargar socios al iniciar
+    cargarSocios();
+
+    // Función para cargar socios
+    async function cargarSocios() {
+        try {
+            const response = await fetch('/api/socios');
+            const socios = await response.json();
+            
+            // Limpiar tabla
+            tablaSocios.querySelector('tbody').innerHTML = '';
+            
+            // Llenar tabla
+            socios.forEach(socio => {
+                const fila = document.createElement('tr');
+                fila.innerHTML = `
+                    <td>${socio.documento_identidad}</td>
+                    <td>${socio.nombre_completo}</td>
+                    <td>${socio.email || '-'}</td>
+                    <td><span class="badge ${getEstadoClass(socio.estado)}">${socio.estado}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary editar" data-id="${socio.id}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger eliminar" data-id="${socio.id}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tablaSocios.querySelector('tbody').appendChild(fila);
+            });
+            
+            // Agregar eventos a los botones
+            document.querySelectorAll('.editar').forEach(btn => {
+                btn.addEventListener('click', cargarSocioParaEditar);
+            });
+            
+            document.querySelectorAll('.eliminar').forEach(btn => {
+                btn.addEventListener('click', eliminarSocio);
+            });
+            
+        } catch (error) {
+            console.error('Error al cargar socios:', error);
+            mostrarAlerta('Error al cargar socios', 'danger');
+        }
+    }
+    
+    // Función auxiliar para clases de estado
+    function getEstadoClass(estado) {
+        const clases = {
+            'activo': 'bg-success',
+            'inactivo': 'bg-secondary',
+            'suspendido': 'bg-warning text-dark'
+        };
+        return clases[estado] || 'bg-light text-dark';
+    }
+    
+    // Formulario submit (crear/actualizar)
+    formSocio.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const socioId = document.getElementById('socioId').value;
+        const url = socioId ? `/api/socios/${socioId}` : '/api/socios';
+        const method = socioId ? 'PUT' : 'POST';
+        
+        const socioData = {
+            documento_identidad: document.getElementById('documento_identidad').value,
+            nombre_completo: document.getElementById('nombre_completo').value,
+            fecha_nacimiento: document.getElementById('fecha_nacimiento').value,
+            fecha_inscripcion: document.getElementById('fecha_inscripcion').value,
+            email: document.getElementById('email').value || null,
+            estado: document.getElementById('estado').value,
+            direccion: document.getElementById('direccion').value || null,
+            nacionalidad: document.getElementById('nacionalidad').value || null,
+            nivel_educativo: document.getElementById('nivel_educativo').value || null,
+            profesion: document.getElementById('profesion').value || null,
+            institucion_referente: document.getElementById('institucion_referente').value || null
+        };
+        
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(socioData)
+            });
+            
+            if (!response.ok) throw new Error(await response.text());
+            
+            mostrarAlerta(`Socio ${socioId ? 'actualizado' : 'creado'} correctamente`, 'success');
+            modalSocio.hide();
+            cargarSocios();
+            
+        } catch (error) {
+            console.error('Error al guardar socio:', error);
+            mostrarAlerta(error.message, 'danger');
+        }
+    });
+    
+    // Cargar socio para editar
+    async function cargarSocioParaEditar(e) {
+        const socioId = e.target.closest('button').dataset.id;
+        
+        try {
+            const response = await fetch(`/api/socios/${socioId}`);
+            if (!response.ok) throw new Error('Socio no encontrado');
+            
+            const socio = await response.json();
+            
+            // Llenar formulario
+            document.getElementById('socioId').value = socio.id;
+            document.getElementById('documento_identidad').value = socio.documento_identidad;
+            document.getElementById('nombre_completo').value = socio.nombre_completo;
+            document.getElementById('fecha_nacimiento').value = socio.fecha_nacimiento.split('T')[0];
+            document.getElementById('fecha_inscripcion').value = socio.fecha_inscripcion.split('T')[0];
+            document.getElementById('email').value = socio.email || '';
+            document.getElementById('estado').value = socio.estado;
+            document.getElementById('direccion').value = socio.direccion || '';
+            document.getElementById('nacionalidad').value = socio.nacionalidad || '';
+            document.getElementById('nivel_educativo').value = socio.nivel_educativo || '';
+            document.getElementById('profesion').value = socio.profesion || '';
+            document.getElementById('institucion_referente').value = socio.institucion_referente || '';
+            
+            // Cambiar título del modal
+            document.getElementById('modalTitulo').textContent = 'Editar Socio';
+            
+            // Mostrar modal
+            modalSocio.show();
+            
+        } catch (error) {
+            console.error('Error al cargar socio:', error);
+            mostrarAlerta('Error al cargar socio', 'danger');
+        }
+    }
+    
+    // Eliminar socio
+    async function eliminarSocio(e) {
+        if (!confirm('¿Estás seguro de eliminar este socio?')) return;
+        
+        const socioId = e.target.closest('button').dataset.id;
+        
+        try {
+            const response = await fetch(`/api/socios/${socioId}`, {
+                method: 'DELETE'
+            });
+            
+            if (!response.ok) throw new Error(await response.text());
+            
+            mostrarAlerta('Socio eliminado correctamente', 'success');
+            cargarSocios();
+            
+        } catch (error) {
+            console.error('Error al eliminar socio:', error);
+            mostrarAlerta('Error al eliminar socio', 'danger');
+        }
+    }
+    
+    // Función para mostrar alertas
+    function mostrarAlerta(mensaje, tipo) {
+        // Implementar según tu sistema de alertas preferido
+        alert(`${tipo.toUpperCase()}: ${mensaje}`);
+    }
+});

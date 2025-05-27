@@ -86,3 +86,19 @@ exports.deleteSocio = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+// Filtrar socios por texto y estado (SQL)
+exports.getSociosFiltrados = async (req, res) => {
+    try {
+        const { texto, estado } = req.query;
+        const socios = await sociosModel.getSociosFiltrados(texto, estado);
+        res.json(socios);
+    } catch (error) {
+        // Imprime absolutamente todo el error
+        console.error('Error en getSociosFiltrados:', error);
+        if (error && error.message) console.error('Mensaje:', error.message);
+        if (error && error.stack) console.error('Stack:', error.stack);
+        res.status(500).json({ error: error.message, stack: error.stack, raw: error });
+        // res.status(500).json({ error: error.message || String(error) });
+    }
+};

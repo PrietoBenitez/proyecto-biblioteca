@@ -2,7 +2,9 @@
 const odbc = require('odbc');
 require('dotenv').config();
 
-const connectionString = `DSN=${process.env.DB_NAME};UID=${process.env.DB_USER};PWD=${process.env.DB_PASSWORD}`;
+//const connectionString = `DSN=${process.env.DB_NAME};UID=${process.env.DB_USER};PWD=${process.env.DB_PASSWORD}`; // old
+
+const connectionString = `DSN=${process.env.DB_NAME};UID=${process.env.DB_USER};PWD=${process.env.DB_PASSWORD};CHARSET=UTF8`; // Caracteres UTF8
 
 async function getConnection() {
   try {

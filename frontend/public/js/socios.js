@@ -2,19 +2,28 @@ document.addEventListener('DOMContentLoaded', function() {
     const tablaSocios = document.getElementById('tablaSocios');
     const formSocio = document.getElementById('formSocio');
     const modalSocio = new bootstrap.Modal(document.getElementById('modalSocio'));
-    
+
+    // Variable para filtros
+    let filtroActual = { texto: '', estado: '' };
+
     // Cargar socios al iniciar
     cargarSocios();
 
-    // Función para cargar socios
+    // Función para cargar socios (con o sin filtro)
     async function cargarSocios() {
         try {
-            const response = await fetch('/api/socios');
+            const params = new URLSearchParams();
+            if (filtroActual.texto) params.append('texto', filtroActual.texto);
+            if (filtroActual.estado) params.append('estado', filtroActual.estado);
+
+            // Cambia la URL según tu backend
+            const url = params.toString() ? `/api/socios/filtrados?${params.toString()}` : '/api/socios';
+            const response = await fetch(url);
             const socios = await response.json();
-            
+
             // Limpiar tabla
             tablaSocios.querySelector('tbody').innerHTML = '';
-            
+
             // Llenar tabla
             socios.forEach(socio => {
                 const fila = document.createElement('tr');
@@ -34,22 +43,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
                 tablaSocios.querySelector('tbody').appendChild(fila);
             });
-            
+
             // Agregar eventos a los botones
             document.querySelectorAll('.editar').forEach(btn => {
                 btn.addEventListener('click', cargarSocioParaEditar);
             });
-            
             document.querySelectorAll('.eliminar').forEach(btn => {
                 btn.addEventListener('click', eliminarSocio);
             });
-            
+
         } catch (error) {
             console.error('Error al cargar socios:', error);
             mostrarAlerta('Error al cargar socios', 'danger');
         }
     }
-    
+
     // Función auxiliar para clases de estado
     function getEstadoClass(estado) {
         const clases = {
@@ -59,15 +67,15 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         return clases[estado] || 'bg-light text-dark';
     }
-    
+
     // Formulario submit (crear/actualizar)
     formSocio.addEventListener('submit', async function(e) {
         e.preventDefault();
-        
+
         const socioId = document.getElementById('socioId').value;
         const url = socioId ? `/api/socios/${socioId}` : '/api/socios';
         const method = socioId ? 'PUT' : 'POST';
-        
+
         const socioData = {
             documento_identidad: document.getElementById('documento_identidad').value,
             nombre_completo: document.getElementById('nombre_completo').value,
@@ -81,7 +89,7 @@ document.addEventListener('DOMContentLoaded', function() {
             profesion: document.getElementById('profesion').value || null,
             institucion_referente: document.getElementById('institucion_referente').value || null
         };
-        
+
         try {
             const response = await fetch(url, {
                 method: method,
@@ -90,29 +98,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 body: JSON.stringify(socioData)
             });
-            
+
             if (!response.ok) throw new Error(await response.text());
-            
+
             mostrarAlerta(`Socio ${socioId ? 'actualizado' : 'creado'} correctamente`, 'success');
             modalSocio.hide();
             cargarSocios();
-            
+
         } catch (error) {
             console.error('Error al guardar socio:', error);
             mostrarAlerta(error.message, 'danger');
         }
     });
-    
+
     // Cargar socio para editar
     async function cargarSocioParaEditar(e) {
         const socioId = e.target.closest('button').dataset.id;
-        
+
         try {
             const response = await fetch(`/api/socios/${socioId}`);
             if (!response.ok) throw new Error('Socio no encontrado');
-            
+
             const socio = await response.json();
-            
+
             // Llenar formulario
             document.getElementById('socioId').value = socio.id;
             document.getElementById('documento_identidad').value = socio.documento_identidad;
@@ -126,44 +134,54 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('nivel_educativo').value = socio.nivel_educativo || '';
             document.getElementById('profesion').value = socio.profesion || '';
             document.getElementById('institucion_referente').value = socio.institucion_referente || '';
-            
+
             // Cambiar título del modal
             document.getElementById('modalTitulo').textContent = 'Editar Socio';
-            
+
             // Mostrar modal
             modalSocio.show();
-            
+
         } catch (error) {
             console.error('Error al cargar socio:', error);
             mostrarAlerta('Error al cargar socio', 'danger');
         }
     }
-    
+
     // Eliminar socio
     async function eliminarSocio(e) {
         if (!confirm('¿Estás seguro de eliminar este socio?')) return;
-        
+
         const socioId = e.target.closest('button').dataset.id;
-        
+
         try {
             const response = await fetch(`/api/socios/${socioId}`, {
                 method: 'DELETE'
             });
-            
+
             if (!response.ok) throw new Error(await response.text());
-            
+
             mostrarAlerta('Socio eliminado correctamente', 'success');
             cargarSocios();
-            
+
         } catch (error) {
             console.error('Error al eliminar socio:', error);
             mostrarAlerta('Error al eliminar socio', 'danger');
         }
     }
-    
+
     // Función para mostrar alertas
     function mostrarAlerta(mensaje, tipo) {
         // Implementar según tu sistema de alertas preferido
         alert(`${tipo.toUpperCase()}: ${mensaje}`);
     }
+
+    // Escuchar cambios en los filtros
+    document.getElementById('inputFiltroTexto').addEventListener('input', function(e) {
+        filtroActual.texto = e.target.value;
+        cargarSocios();
+    });
+    document.getElementById('inputFiltroEstado').addEventListener('change', function(e) {
+        filtroActual.estado = e.target.value;
+        cargarSocios();
+    });
 });

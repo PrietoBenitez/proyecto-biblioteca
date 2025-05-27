@@ -87,10 +87,30 @@ async function deleteSocio(id) {
     return { affectedRows: result.count || result.affectedRows || 0 };
 }
 
+async function getSociosFiltrados(texto, estado) {
+    let query = 'SELECT * FROM Socios WHERE 1=1'; // Usa el nombre correcto de la tabla
+    const params = [];
+
+    if (texto) {
+        query += ' AND (documento_identidad LIKE ? OR nombre_completo LIKE ? OR email LIKE ?)';
+        params.push(`%${texto}%`, `%${texto}%`, `%${texto}%`);
+    }
+    if (estado) {
+        query += ' AND estado = ?';
+        params.push(estado);
+    }
+
+    const db = await getConnection();
+    const rows = await db.query(query, params); // Usa query en vez de execute
+    await db.close();
+    return rows;
+}
+
 module.exports = {
     getAllSocios,
     getSocioById,
     createSocio,
     updateSocio,
-    deleteSocio
+    deleteSocio,
+    getSociosFiltrados,
 };

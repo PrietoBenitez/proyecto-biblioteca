@@ -1,6 +1,6 @@
-// backend/controllers/socios.controller.js
 const { getConnection } = require('../config/db');
 const sociosModel = require('../models/socios.model');
+
 
 // Obtener todos los socios
 exports.getAllSocios = async (req, res) => {
@@ -58,7 +58,6 @@ exports.updateSocio = async (req, res) => {
     try {
         const result = await sociosModel.updateSocio(id, socio);
 
-        // Ajusta según el resultado que devuelva tu model (puede ser result.count o result.affectedRows)
         if (!result || result.affectedRows === 0 || result.count === 0) {
             return res.status(404).json({ message: 'Socio no encontrado' });
         }
@@ -76,17 +75,19 @@ exports.deleteSocio = async (req, res) => {
     try {
         const result = await sociosModel.deleteSocio(id);
 
-        // Ajusta según el resultado que devuelva tu model (puede ser result.count o result.affectedRows)
         if (!result || result.affectedRows === 0 || result.count === 0) {
             return res.status(404).json({ message: 'Socio no encontrado' });
         }
 
         res.json({ message: 'Socio eliminado exitosamente' });
     } catch (error) {
+        // Si hay sanciones activas, el trigger de la DB impedirá el borrado y enviará un mensaje de error.
+        // Mostramos el mensaje del trigger.
         res.status(500).json({ error: error.message });
     }
 };
 
+// Obtener estados únicos de la tabla Socios
 exports.getEstadosUnicos = async (req, res) => {
     try {
         const estados = await sociosModel.getEstadosUnicos();
@@ -111,3 +112,49 @@ exports.getSociosFiltrados = async (req, res) => {
     }
 };
 
+// Obtener sanciones activas por socio
+exports.getSancionesActivasBySocio = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const sanciones = await sociosModel.getSancionesActivasBySocio(id);
+        res.json(sanciones);
+    } catch (error) {
+        console.error('Error en getSancionesActivasBySocio:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// Obtener sanciones activas Y estado del socio
+exports.getSancionesYEstadoBySocio = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const sanciones = await sociosModel.getSancionesActivasBySocio(id);
+        const socio = await sociosModel.getSocioById(id);
+        const estado = socio ? socio.estado : null;
+
+        res.json({
+            sanciones,
+            estado
+        });
+    } catch (error) {
+        console.error('Error en getSancionesYEstadoBySocio:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// Agregar una sanción a un socio (el trigger gestiona el estado automáticamente)
+exports.agregarSancionASocio = async (req, res) => {
+    const socio_id = req.params.id;
+    const { motivo, fecha_inicio, fecha_fin } = req.body;
+
+    if (!motivo || !fecha_inicio) {
+        return res.status(400).json({ error: 'Motivo y fecha de inicio son obligatorios.' });
+    }
+
+    try {
+        await sociosModel.agregarSancionASocio({ socio_id, motivo, fecha_inicio, fecha_fin });
+        res.status(201).json({ message: 'Sanción agregada correctamente.' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};

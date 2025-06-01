@@ -1,5 +1,6 @@
 const { getConnection } = require('../config/db');
 
+// Obtener todos los socios
 async function getAllSocios() {
     const db = await getConnection();
     const result = await db.query('SELECT * FROM Socios');
@@ -7,6 +8,7 @@ async function getAllSocios() {
     return result;
 }
 
+// Obtener un socio por ID
 async function getSocioById(id) {
     const db = await getConnection();
     const result = await db.query('SELECT * FROM Socios WHERE id = ?', [id]);
@@ -14,6 +16,7 @@ async function getSocioById(id) {
     return result[0];
 }
 
+// Crear un nuevo socio
 async function createSocio(data) {
     const db = await getConnection();
     const insertQuery = `
@@ -38,10 +41,10 @@ async function createSocio(data) {
     ];
     const result = await db.query(insertQuery, values);
     await db.close();
-    // Devuelve el número de filas afectadas
     return { affectedRows: result.count || result.affectedRows || 0 };
 }
 
+// Actualizar un socio existente
 async function updateSocio(id, data) {
     const db = await getConnection();
     const updateQuery = `
@@ -75,21 +78,20 @@ async function updateSocio(id, data) {
     ];
     const result = await db.query(updateQuery, values);
     await db.close();
-    // Devuelve el número de filas afectadas
     return { affectedRows: result.count || result.affectedRows || 0 };
 }
 
+// Eliminar un socio por ID
 async function deleteSocio(id) {
     const db = await getConnection();
     const result = await db.query('DELETE FROM Socios WHERE id = ?', [id]);
     await db.close();
-    // Devuelve el número de filas afectadas
     return { affectedRows: result.count || result.affectedRows || 0 };
 }
 
+// Obtener socios filtrados con paginación y conteo total
 async function getSociosFiltrados(texto, estado, page = 1, limit = 10) {
     let baseQuery = 'FROM Socios WHERE 1=1';
-    // Construir WHERE y parámetros para la consulta principal
     let where = '';
     const mainParams = [];
     if (texto) {
@@ -100,7 +102,7 @@ async function getSociosFiltrados(texto, estado, page = 1, limit = 10) {
         where += ' AND estado = ?';
         mainParams.push(estado);
     }
-    // Construir WHERE y parámetros para la subconsulta (idéntico a la principal)
+    // Subconsulta para paginación
     let subWhere = '';
     const subParams = [];
     if (texto) {
@@ -111,7 +113,6 @@ async function getSociosFiltrados(texto, estado, page = 1, limit = 10) {
         subWhere += ' AND estado = ?';
         subParams.push(estado);
     }
-    // Paginación Sybase: TOP y OFFSET manual
     const offset = (page - 1) * limit;
     let query = '';
     let queryParams = [];
@@ -122,7 +123,6 @@ async function getSociosFiltrados(texto, estado, page = 1, limit = 10) {
         query = `SELECT TOP ${limit} * ${baseQuery}${where} ORDER BY id DESC`;
         queryParams = mainParams;
     }
-    // Conteo total
     const countQuery = `SELECT COUNT(*) as total ${baseQuery}${where}`;
     const countParams = [...mainParams];
 
@@ -143,11 +143,11 @@ async function getSociosFiltrados(texto, estado, page = 1, limit = 10) {
     return { socios, total };
 }
 
+// Obtener estados únicos de la tabla Socios
 async function getEstadosUnicos() {
     const db = await getConnection();
     const result = await db.query('SELECT DISTINCT estado FROM Socios');
     await db.close();
-    // Filtra solo los objetos que tienen la propiedad 'estado'
     if (Array.isArray(result)) {
         return result.filter(e => Object.prototype.hasOwnProperty.call(e, 'estado'));
     }
@@ -155,6 +155,41 @@ async function getEstadosUnicos() {
         return result.rows.filter(e => Object.prototype.hasOwnProperty.call(e, 'estado'));
     }
     return [];
+}
+
+// Obtener sanciones activas de un socio desde la vista SociosSancionados
+async function getSancionesActivasBySocio(socioId) {
+    const db = await getConnection();
+    const query = `
+        SELECT motivo, fecha_inicio, fecha_fin, dias_restantes_sancion
+        FROM SociosSancionados
+        WHERE id = ? AND (fecha_fin IS NULL OR fecha_fin >= GETDATE())
+    `;
+    const result = await db.query(query, [socioId]);
+    await db.close();
+    if (Array.isArray(result)) return result;
+    if (result && Array.isArray(result.rows)) return result.rows;
+    return [];
+}
+
+// Obtener sanciones activas Y estado del socio juntos
+async function getSancionesYEstadoBySocio(socioId) {
+    const sanciones = await getSancionesActivasBySocio(socioId);
+    const socio = await getSocioById(socioId);
+    return {
+        sanciones,
+        estado: socio ? socio.estado : null,
+    };
+}
+
+// AGREGADO: Agregar una sanción a un socio (el trigger de la base de datos maneja el estado del socio)
+async function agregarSancionASocio({ socio_id, motivo, fecha_inicio, fecha_fin }) {
+    const db = await getConnection();
+    await db.query(
+        `INSERT INTO Sanciones (socio_id, motivo, fecha_inicio, fecha_fin) VALUES (?, ?, ?, ?)`,
+        [socio_id, motivo, fecha_inicio, fecha_fin || null]
+    );
+    await db.close();
 }
 
 module.exports = {
@@ -165,4 +200,7 @@ module.exports = {
     deleteSocio,
     getSociosFiltrados,
     getEstadosUnicos,
+    getSancionesActivasBySocio,
+    getSancionesYEstadoBySocio,
+    agregarSancionASocio,
 };

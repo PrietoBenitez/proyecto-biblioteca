@@ -3,6 +3,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const formSocio = document.getElementById('formSocio');
     const modalSocio = new bootstrap.Modal(document.getElementById('modalSocio'));
 
+    // ==== NUEVO: Referencias para el modal de sanciones ====
+    const modalSanciones = new bootstrap.Modal(document.getElementById('modalSanciones'));
+    const modalSancionesBody = document.getElementById('modalSancionesBody');
+    // =======================================================
+
     // Variable para filtros
     let filtroActual = { texto: '', estado: '' };
 
@@ -10,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let paginaActual = 1;
     const sociosPorPagina = 10;
 
-    // Cargar socios al iniciar
+    // Cargar socios al iniciar     
     cargarSocios();
     cargarEstadosUnicos();
 
@@ -47,6 +52,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         <button class="btn btn-sm btn-outline-danger eliminar" data-id="${socio.id}">
                             <i class="fas fa-trash"></i>
                         </button>
+                        <button class="btn btn-sm btn-warning ver-sanciones" data-id="${socio.id}">
+                            <i class="fas fa-ban"></i> Sanciones
+                        </button>
                     </td>
                 `;
                 tablaSocios.querySelector('tbody').appendChild(fila);
@@ -60,12 +68,74 @@ document.addEventListener('DOMContentLoaded', function() {
                 btn.addEventListener('click', eliminarSocio);
             });
 
+            // NUEVO: Evento para los botones "Ver Sanciones"
+            document.querySelectorAll('.ver-sanciones').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const socioId = this.dataset.id;
+                    mostrarSanciones(socioId);
+                });
+            });
+
             // Paginación visual
             renderizarPaginacion(total, page);
             paginaActual = page;
         } catch (error) {
             console.error('Error al cargar socios:', error);
             mostrarAlerta('Error al cargar socios', 'danger');
+        }
+    }
+
+    // NUEVO: Función para mostrar sanciones activas en modal **y mostrar el botón Agregar Sanción si corresponde**
+    async function mostrarSanciones(socioId) {
+        modalSancionesBody.innerHTML = `<div class="text-center"><div class="spinner-border" role="status"></div></div>`;
+        modalSanciones.show();
+
+        try {
+            // Usar el nuevo endpoint que trae sanciones activas y estado
+            const response = await fetch(`/api/socios/${socioId}/sanciones-y-estado`);
+            if (!response.ok) throw new Error('No se pudo cargar sanciones activas.');
+
+            const data = await response.json();
+            const sanciones = data.sanciones;
+            const estado = data.estado;
+
+            let html = '';
+            if (!sanciones || sanciones.length === 0) {
+                html = '<p class="text-success">Sin sanciones activas</p>';
+            } else {
+                html = '<ul class="list-group">';
+                sanciones.forEach(s => {
+                    html += `<li class="list-group-item">
+                        <b>Motivo:</b> ${s.motivo}<br>
+                        <b>Desde:</b> ${s.fecha_inicio} <b>hasta</b> ${s.fecha_fin ?? 'Indefinida'}<br>
+                        <b>Días restantes:</b> ${s.dias_restantes_sancion}
+                    </li>`;
+                });
+                html += '</ul>';
+            }
+
+            // Si el socio está ACTIVO, mostrar el botón "Agregar Sanción"
+            if (estado === 'activo') {
+                html += `
+                    <div class="mt-3 text-end">
+                        <button class="btn btn-primary" id="btnAgregarSancion" data-id="${socioId}">
+                            <i class="fas fa-plus"></i> Agregar Sanción
+                        </button>
+                    </div>
+                `;
+            }
+
+            modalSancionesBody.innerHTML = html;
+
+            // Evento para el botón "Agregar Sanción"
+            if (estado === 'activo') {
+                document.getElementById('btnAgregarSancion').addEventListener('click', function() {
+                    mostrarModalAgregarSancion(socioId);
+                });
+            }
+
+        } catch (error) {
+            modalSancionesBody.innerHTML = `<div class="alert alert-danger">Error al cargar sanciones.</div>`;
         }
     }
 
@@ -96,7 +166,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const clases = {
             'activo': 'bg-success',
             'inactivo': 'bg-secondary',
-            'suspendido': 'bg-warning text-dark'
+            'suspendido': 'bg-warning text-dark',
+            'sancionado': 'bg-danger'
         };
         return clases[estado] || 'bg-light text-dark';
     }
@@ -241,4 +312,94 @@ document.addEventListener('DOMContentLoaded', function() {
         filtroActual.estado = e.target.value;
         cargarSocios(1);
     });
-});
+
+    // NUEVO: Modal simple para agregar sanción (AJUSTADO: usa el endpoint correcto)
+    function mostrarModalAgregarSancion(socioId) {
+        // Cerrar modal sanciones
+        modalSanciones.hide();
+
+        // Crear modal dinámico
+        let modal = document.getElementById('modalAgregarSancion');
+        if (modal) modal.remove();
+
+        modal = document.createElement('div');
+        modal.className = 'modal fade';
+        modal.id = 'modalAgregarSancion';
+        modal.tabIndex = -1;
+        modal.innerHTML = `
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form id="formAgregarSancion">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Agregar Sanción</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">Motivo*</label>
+                                <input type="text" class="form-control" id="motivoSancion" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Fecha inicio*</label>
+                                <input type="date" class="form-control" id="fechaInicioSancion" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Fecha fin</label>
+                                <input type="date" class="form-control" id="fechaFinSancion">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Guardar Sanción</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        const modalBootstrap = new bootstrap.Modal(modal);
+        modalBootstrap.show();
+
+        // Al cerrar, eliminar el modal del DOM
+        modal.addEventListener('hidden.bs.modal', function() {
+            modal.remove();
+        });
+
+        // Submit del formulario de sanción
+        document.getElementById('formAgregarSancion').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const motivo = document.getElementById('motivoSancion').value.trim();
+            const fecha_inicio = document.getElementById('fechaInicioSancion').value;
+            const fecha_fin = document.getElementById('fechaFinSancion').value || null;
+
+            if (!motivo || !fecha_inicio) {
+                alert('Completa los campos obligatorios.');
+                return;
+            }
+
+            try {
+                // Usa el endpoint correcto del backend
+                const resp = await fetch(`/api/socios/${socioId}/sancionar`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        motivo,
+                        fecha_inicio,
+                        fecha_fin
+                    })
+                });
+                if (!resp.ok) throw new Error(await resp.text());
+
+                mostrarAlerta('Sanción agregada correctamente', 'success');
+                modalBootstrap.hide();
+                cargarSocios();
+            } catch (err) {
+                mostrarAlerta('Error al agregar sanción: ' + err.message, 'danger');
+            }
+        });
+    }
+
+}); 

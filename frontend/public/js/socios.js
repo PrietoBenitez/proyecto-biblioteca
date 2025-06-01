@@ -6,20 +6,28 @@ document.addEventListener('DOMContentLoaded', function() {
     // Variable para filtros
     let filtroActual = { texto: '', estado: '' };
 
+    // Variables para paginación
+    let paginaActual = 1;
+    const sociosPorPagina = 10;
+
     // Cargar socios al iniciar
     cargarSocios();
+    cargarEstadosUnicos();
 
-    // Función para cargar socios (con o sin filtro)
-    async function cargarSocios() {
+    // Función para cargar socios (con o sin filtro y paginación)
+    async function cargarSocios(page = 1) {
         try {
             const params = new URLSearchParams();
             if (filtroActual.texto) params.append('texto', filtroActual.texto);
             if (filtroActual.estado) params.append('estado', filtroActual.estado);
+            params.append('page', page);
+            params.append('limit', sociosPorPagina);
 
-            // Cambia la URL según tu backend
-            const url = params.toString() ? `/api/socios/filtrados?${params.toString()}` : '/api/socios';
+            const url = `/api/socios/filtrados?${params.toString()}`;
             const response = await fetch(url);
-            const socios = await response.json();
+            const data = await response.json();
+            const socios = data.socios || [];
+            const total = data.total || 0;
 
             // Limpiar tabla
             tablaSocios.querySelector('tbody').innerHTML = '';
@@ -52,9 +60,34 @@ document.addEventListener('DOMContentLoaded', function() {
                 btn.addEventListener('click', eliminarSocio);
             });
 
+            // Paginación visual
+            renderizarPaginacion(total, page);
+            paginaActual = page;
         } catch (error) {
             console.error('Error al cargar socios:', error);
             mostrarAlerta('Error al cargar socios', 'danger');
+        }
+    }
+
+    // Renderizar paginación
+    function renderizarPaginacion(total, page) {
+        const paginacion = document.getElementById('paginacion');
+        paginacion.innerHTML = '';
+        const totalPaginas = Math.ceil(total / sociosPorPagina);
+        if (totalPaginas <= 1) return;
+        for (let i = 1; i <= totalPaginas; i++) {
+            const li = document.createElement('li');
+            li.className = 'page-item' + (i === page ? ' active' : '');
+            const a = document.createElement('a');
+            a.className = 'page-link';
+            a.href = '#';
+            a.textContent = i;
+            a.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (paginaActual !== i) cargarSocios(i);
+            });
+            li.appendChild(a);
+            paginacion.appendChild(li);
         }
     }
 
@@ -175,13 +208,37 @@ document.addEventListener('DOMContentLoaded', function() {
         alert(`${tipo.toUpperCase()}: ${mensaje}`);
     }
 
+    // Cargar estados únicos para el filtro y el formulario
+    async function cargarEstadosUnicos() {
+        // Filtro
+        const selectFiltro = document.getElementById('inputFiltroEstado');
+        if (selectFiltro) selectFiltro.innerHTML = '<option value="">Todos</option>';
+        // Formulario
+        const selectForm = document.getElementById('estado');
+        if (selectForm) selectForm.innerHTML = '';
+        try {
+            const response = await fetch('/api/socios/estados');
+            const estados = await response.json();
+            estados.forEach(e => {
+                const valor = e.estado || e.ESTADO;
+                // Filtro
+                if (selectFiltro) selectFiltro.innerHTML += `<option value="${valor}">${valor.charAt(0).toUpperCase() + valor.slice(1)}</option>`;
+                // Formulario
+                if (selectForm) selectForm.innerHTML += `<option value="${valor}">${valor.charAt(0).toUpperCase() + valor.slice(1)}</option>`;
+            });
+        } catch (err) {
+            if (selectFiltro) selectFiltro.innerHTML += '<option value="">(Error al cargar)</option>';
+            if (selectForm) selectForm.innerHTML += '<option value="">(Error al cargar)</option>';
+        }
+    }
+
     // Escuchar cambios en los filtros
     document.getElementById('inputFiltroTexto').addEventListener('input', function(e) {
         filtroActual.texto = e.target.value;
-        cargarSocios();
+        cargarSocios(1);
     });
     document.getElementById('inputFiltroEstado').addEventListener('change', function(e) {
         filtroActual.estado = e.target.value;
-        cargarSocios();
+        cargarSocios(1);
     });
 });

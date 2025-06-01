@@ -87,18 +87,27 @@ exports.deleteSocio = async (req, res) => {
     }
 };
 
+exports.getEstadosUnicos = async (req, res) => {
+    try {
+        const estados = await sociosModel.getEstadosUnicos();
+        res.json(estados);
+    } catch (error) {
+        console.error('Error en getEstadosUnicos:', error);
+        res.status(500).json({ error: error.message, stack: error.stack, raw: error });
+    }
+};
+
 // Filtrar socios por texto y estado (SQL)
 exports.getSociosFiltrados = async (req, res) => {
     try {
-        const { texto, estado } = req.query;
-        const socios = await sociosModel.getSociosFiltrados(texto, estado);
-        res.json(socios);
+        const { texto, estado, page = 1, limit = 10 } = req.query;
+        const pageNum = parseInt(page, 10) || 1;
+        const limitNum = parseInt(limit, 10) || 10;
+        const { socios, total } = await sociosModel.getSociosFiltrados(texto, estado, pageNum, limitNum);
+        res.json({ socios, total, page: pageNum, limit: limitNum });
     } catch (error) {
-        // Imprime absolutamente todo el error
         console.error('Error en getSociosFiltrados:', error);
-        if (error && error.message) console.error('Mensaje:', error.message);
-        if (error && error.stack) console.error('Stack:', error.stack);
         res.status(500).json({ error: error.message, stack: error.stack, raw: error });
-        // res.status(500).json({ error: error.message || String(error) });
     }
 };
+

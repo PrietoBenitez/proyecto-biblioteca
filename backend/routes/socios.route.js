@@ -1,7 +1,13 @@
-// backend/routes/socios.route.js
 const express = require('express');
 const router = express.Router();
 const sociosController = require('../controllers/socios.controller');
+
+// GET /api/socios/estados  
+router.get('/estados', sociosController.getEstadosUnicos);
+
+// GET /api/socios/filtrados
+router.get('/filtrados', sociosController.getSociosFiltrados);
+
 
 // GET /api/socios
 router.get('/', sociosController.getAllSocios);
@@ -18,4 +24,4 @@ router.put('/:id', sociosController.updateSocio);
 // DELETE /api/socios/:id
 router.delete('/:id', sociosController.deleteSocio);
 
-module.exports = router;
+module.exports = router;    

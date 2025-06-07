@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const formSocio = document.getElementById('formSocio');
     const modalSocio = new bootstrap.Modal(document.getElementById('modalSocio'));
 
-    // ==== NUEVO: Referencias para el modal de sanciones ====
+    // Referencias para el modal de sanciones ====
     const modalSanciones = new bootstrap.Modal(document.getElementById('modalSanciones'));
     const modalSancionesBody = document.getElementById('modalSancionesBody');
     // =======================================================
@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 btn.addEventListener('click', eliminarSocio);
             });
 
-            // NUEVO: Evento para los botones "Ver Sanciones"
+            //Evento para los botones "Ver Sanciones"
             document.querySelectorAll('.ver-sanciones').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const socioId = this.dataset.id;
@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // NUEVO: Función para mostrar sanciones activas en modal **y mostrar el botón Agregar Sanción si corresponde**
+    //Función para mostrar sanciones activas en modal **y mostrar el botón Agregar Sanción si corresponde**
     async function mostrarSanciones(socioId) {
         modalSancionesBody.innerHTML = `<div class="text-center"><div class="spinner-border" role="status"></div></div>`;
         modalSanciones.show();
@@ -313,7 +313,7 @@ document.addEventListener('DOMContentLoaded', function() {
         cargarSocios(1);
     });
 
-    // NUEVO: Modal simple para agregar sanción (AJUSTADO: usa el endpoint correcto)
+    // Modal simple para agregar sanción (AJUSTADO: usa el endpoint correcto)
     function mostrarModalAgregarSancion(socioId) {
         // Cerrar modal sanciones
         modalSanciones.hide();

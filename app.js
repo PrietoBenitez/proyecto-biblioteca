@@ -39,6 +39,10 @@ app.get('/socios', (req, res) => {
     res.sendFile(path.join(__dirname, 'frontend/views/socios.html'));
 });
 
+app.get('/materiales', (req, res) => {
+    res.sendFile(path.join(__dirname, 'frontend/views/materiales.html'));
+});
+
 // Iniciar servidor
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);

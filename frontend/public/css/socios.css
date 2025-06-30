@@ -30,7 +30,18 @@ body {
     padding: 0.8rem 0;
 }
 
+.navbar .container, .navbar-custom .container {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding-left: 0 !important;
+    padding-right: 0;
+}
+
 .navbar-brand {
+    margin-left: 0 !important;
+    margin-right: 2rem;
+    padding-left: 0 !important;
     display: flex;
     align-items: center;
 }
@@ -86,6 +97,12 @@ body {
     font-size: 1.4rem;
     margin-right: 8px;
     color: var(--primary-color);
+}
+
+/* El menú y usuario a la derecha */
+.navbar-collapse {
+    flex-grow: 1 !important;
+    justify-content: flex-end !important;
 }
 
 .main-content {
@@ -358,46 +375,152 @@ body[data-theme="dark"] .footer-copyright {
 /* Modo oscuro para el contenedor principal de socios */
 body[data-theme="dark"] main.container,
 body[data-theme="dark"] .container.py-4 {
-    background-color: #23272f !important;
-    color: var(--text-color);
-    border-radius: 12px;
-    box-shadow: 0 2px 16px rgba(0,0,0,0.25);
+    background-color: #181b20 !important;
+    color: #fff !important;
+    border-radius: 18px;
+    box-shadow: 0 2px 24px rgba(0,0,0,0.45);
+    border: 1px solid #23272f;
+    max-width: 98vw;
 }
 
 body[data-theme="dark"] .table,
 body[data-theme="dark"] .table thead,
 body[data-theme="dark"] .table tbody {
-    background-color: transparent;
-    color: var(--text-color);
+    background-color: #181b20 !important;
+    color: #fff !important;
+    border-color: #23272f;
 }
 
 body[data-theme="dark"] .table-hover tbody tr:hover {
-    background-color: #2c313a;
+    background-color: #23272f !important;
+}
+
+body[data-theme="dark"] .table td, 
+body[data-theme="dark"] .table th {
+    background-color: #181b20 !important;
+    color: #fff !important;
+    border-color: #23272f !important;
+}
+
+body[data-theme="dark"] .table-light {
+    background-color: #23272f !important;
+    color: #fff !important;
+    border-bottom: 2px solid #23272f !important;
 }
 
 body[data-theme="dark"] .form-control,
 body[data-theme="dark"] .form-select {
     background-color: #23272f;
-    color: var(--text-color);
+    color: #fff;
     border-color: #444a57;
 }
 
 body[data-theme="dark"] .form-control:focus,
 body[data-theme="dark"] .form-select:focus {
     background-color: #23272f;
-    color: var(--text-color);
+    color: #fff;
     border-color: var(--primary-color);
 }
 
 body[data-theme="dark"] .modal-content {
     background-color: #23272f;
-    color: var(--text-color);
+    color: #fff;
     border: 1px solid #444a57;
 }
 
-body[data-theme="dark"] .table-light {
+/* Estilos para el contenedor principal en modo claro */
+main.container,
+.container.py-4 {
+    background-color: var(--white);
+    color: var(--text-color);
+    border-radius: 18px;
+    box-shadow: 0 2px 24px rgba(0,0,0,0.10);
+    border: 1px solid #e0e0e0;
+    max-width: 98vw;
+    margin-top: 2.5rem;
+}
+
+/* Contenedor principal socios destacado (si no existe, agregar la clase en el HTML) */
+.socios-main-container {
+    background-color: var(--white);
+    color: var(--text-color);
+    border-radius: 18px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.13);
+    border: 1.5px solid #e0e0e0;
+    max-width: 98vw;
+    margin-top: 2.5rem;
+    padding: 2.5rem 2rem 2rem 2rem;
+    /* Elimina el efecto de borde al hacer hover o focus */
+    transition: none;
+}
+
+.socios-main-container:focus-within,
+.socios-main-container:hover {
+    /* Elimina el cambio de sombra y borde al hacer hover/focus */
+    box-shadow: 0 4px 24px rgba(0,0,0,0.13);
+    border-color: #e0e0e0;
+}
+
+body[data-theme="dark"] .socios-main-container {
+    background-color: #181b20 !important;
+    color: #fff !important;
+    border-radius: 18px;
+    box-shadow: 0 2px 24px rgba(0,0,0,0.45);
+    border: 1.5px solid #23272f;
+}
+
+/* Input de búsqueda de socios: texto y placeholder visibles en dark mode */
+body[data-theme="dark"] .socios-main-container input[type="search"],
+body[data-theme="dark"] .socios-main-container input[type="text"] {
     background-color: #23272f !important;
-    color: var(--text-color) !important;
+    color: #fff !important;
+    border-color: #444a57 !important;
+}
+body[data-theme="dark"] .socios-main-container input[type="search"]::placeholder,
+body[data-theme="dark"] .socios-main-container input[type="text"]::placeholder {
+    color: #b0b0b0 !important;
+    opacity: 1 !important;
+}
+
+/* Paginación */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    list-style: none;
+    padding: 0;
+    margin: 1.5rem 0;
+}
+
+.pagination li {
+    margin: 0 0.2rem;
+}
+
+.page-link {
+    display: block;
+    padding: 0.5rem 1rem;
+    color: var(--primary-color);
+    background-color: var(--white);
+    border: 1px solid var(--primary-color);
+    border-radius: 0.25rem;
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.page-link:hover {
+    background-color: var(--primary-color);
+    color: var(--white);
+}
+
+.page-item.active .page-link {
+    background-color: var(--primary-color);
+    color: var(--white);
+    border-color: var(--primary-color);
+}
+
+/* Estilos para la paginación en modo oscuro */
+body[data-theme="dark"] .pagination {
+    color: #fff;
 }
 
 body[data-theme="dark"] .pagination .page-link {
@@ -405,6 +528,7 @@ body[data-theme="dark"] .pagination .page-link {
     color: var(--text-color);
     border-color: #444a57;
 }
+
 body[data-theme="dark"] .pagination .page-item.active .page-link {
     background-color: var(--primary-color);
     color: #fff;
@@ -444,4 +568,23 @@ body[data-theme="dark"] .pagination .page-item.active .page-link {
         flex-direction: column;
         gap: 0.5rem;
     }
+}
+
+@media (max-width: 991.98px) {
+  .navbar .container, .navbar-custom .container {
+    flex-direction: row;
+    justify-content: flex-start;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  .navbar-brand {
+    margin-right: 1rem;
+  }
+}
+
+@media (min-width: 992px) {
+  .navbar .container, .navbar-custom .container {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
 }

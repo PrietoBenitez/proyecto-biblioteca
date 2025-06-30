@@ -39,7 +39,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">
+                        <a class="nav-link" href="/prestamos">
                             <i class="fas fa-exchange-alt"></i> Préstamos
                         </a>
                     </li>
@@ -68,7 +68,7 @@
 </nav>
 
     <!-- Contenido principal -->
-    <main class="container py-4">
+    <main class="container py-4 materiales-main-container">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2 class="mb-0"><i class="fas fa-book me-2"></i>Gestión de Materiales</h2>
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalMaterial">
@@ -77,12 +77,24 @@
         </div>
         <!-- Filtros -->
         <div class="row mb-3">
-            <div class="col-md-4">
+            <div class="col-md-4 mb-2">
                 <input type="text" class="form-control" id="inputFiltroTexto" placeholder="Buscar material...">
             </div>
-            <div class="col-md-4">
+            <div class="col-md-4 mb-2">
                 <select class="form-select" id="inputFiltroEstado">
-                    <option value="">Todos</option>
+                    <option value="">Todos los estados</option>
+                    <option value="D">Disponible</option>
+                    <option value="P">Prestado</option>
+                    <option value="M">Mantenimiento</option>
+                    <option value="R">Reservado</option>
+                </select>
+            </div>
+            <div class="col-md-4 mb-2">
+                <select class="form-select" id="inputFiltroCondicion">
+                    <option value="">Todas las condiciones</option>
+                    <option value="B">Bueno</option>
+                    <option value="R">Regular</option>
+                    <option value="D">Dañado</option>
                 </select>
             </div>
         </div>
@@ -93,9 +105,20 @@
                     <tr>
                         <th>Nombre</th>
                         <th>Categoría</th>
+                        <th>Subtipo</th>
                         <th>Tipo</th>
+                        <th>Formato</th>
                         <th>Ubicación</th>
-                        <!-- <th>Estado</th> -->
+                        <th>Valor</th>
+                        <th>País</th>
+                        <th>Descripción</th>
+                        <th>Estado</th>
+                        <th>Restringido</th>
+                        <th>Donado</th>
+                        <th>Donante</th>
+                        <th>Fecha Donación</th>
+                        <th>Estado al Donar</th>
+                        <th>Condición</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -113,7 +136,7 @@
     </main>
     <!-- Modal para agregar/editar material -->
     <div class="modal fade" id="modalMaterial" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="modalTitulo">Nuevo Material</h5>
@@ -123,43 +146,49 @@
                     <div class="modal-body">
                         <input type="hidden" id="materialId">
                         <div class="row">
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-4 mb-3">
                                 <label for="nombre" class="form-label">Nombre*</label>
                                 <input type="text" class="form-control" id="nombre" required>
                             </div>
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-4 mb-3">
                                 <label for="categoria" class="form-label">Categoría*</label>
-                                <input type="text" class="form-control" id="categoria" required>
+                                <select class="form-select" id="categoria" required></select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="subtipo" class="form-label">Subtipo*</label>
+                                <select class="form-select" id="subtipo" required></select>
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="subtipo" class="form-label">Subtipo*</label>
-                                <input type="text" class="form-control" id="subtipo" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-4 mb-3">
                                 <label for="tipo_material" class="form-label">Tipo de Material*</label>
                                 <input type="text" class="form-control" id="tipo_material" required>
                             </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-4 mb-3">
                                 <label for="formato" class="form-label">Formato</label>
                                 <input type="text" class="form-control" id="formato">
                             </div>
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-4 mb-3">
                                 <label for="ubicacion" class="form-label">Ubicación</label>
                                 <input type="text" class="form-control" id="ubicacion">
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-4 mb-3">
                                 <label for="valor_estimado" class="form-label">Valor Estimado</label>
                                 <input type="number" class="form-control" id="valor_estimado" min="0" step="0.01">
                             </div>
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-4 mb-3">
                                 <label for="pais_origen" class="form-label">País de Origen</label>
-                                <input type="text" class="form-control" id="pais_origen">
+                                <select class="form-select" id="pais_origen"></select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="condicion" class="form-label">Condición</label>
+                                <select class="form-select" id="condicion">
+                                    <option value="B">Bueno</option>
+                                    <option value="R">Regular</option>
+                                    <option value="D">Dañado</option>
+                                </select>
                             </div>
                         </div>
                         <div class="mb-3">
@@ -167,29 +196,34 @@
                             <textarea class="form-control" id="descripcion" rows="2"></textarea>
                         </div>
                         <div class="row">
-                            <!-- <div class="col-md-4 mb-3">
+                            <div class="col-md-4 mb-3">
                                 <label for="estado" class="form-label">Estado</label>
-                                <select class="form-select" id="estado"></select>
-                            </div> -->
+                                <select class="form-select" id="estado">
+                                    <option value="D">Disponible</option>
+                                    <option value="P">Prestado</option>
+                                    <option value="M">Mantenimiento</option>
+                                    <option value="R">Reservado</option>
+                                </select>
+                            </div>
                             <div class="col-md-4 mb-3">
                                 <label for="es_restringido" class="form-label">¿Restringido?</label>
                                 <select class="form-select" id="es_restringido">
-                                    <option value="0">No</option>
-                                    <option value="1">Sí</option>
+                                    <option value="N">No</option>
+                                    <option value="S">Sí</option>
                                 </select>
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label for="donado" class="form-label">¿Donado?</label>
                                 <select class="form-select" id="donado">
-                                    <option value="0">No</option>
-                                    <option value="1">Sí</option>
+                                    <option value="N">No</option>
+                                    <option value="S">Sí</option>
                                 </select>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="nombre_donante" class="form-label">Nombre del Donante</label>
-                                <input type="text" class="form-control" id="nombre_donante">
+                                <label for="nombre_donante" class="form-label">Donante</label>
+                                <select class="form-select" id="nombre_donante"></select>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="fecha_donacion" class="form-label">Fecha de Donación</label>
@@ -198,7 +232,12 @@
                         </div>
                         <div class="mb-3">
                             <label for="estado_al_donar" class="form-label">Estado al Donar</label>
-                            <input type="text" class="form-control" id="estado_al_donar">
+                            <select class="form-select" id="estado_al_donar">
+                                <option value="">Seleccione...</option>
+                                <option value="B">Bueno</option>
+                                <option value="R">Regular</option>
+                                <option value="D">Dañado</option>
+                            </select>
                         </div>
                     </div>
                     <div class="modal-footer">

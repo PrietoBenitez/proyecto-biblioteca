@@ -1,0 +1,285 @@
+/* Basado en materiales.css y socios.css para mantener coherencia visual */
+:root {
+    --primary-color: #3498db;
+    --secondary-color: #2c3e50;
+    --accent-color: #e74c3c;
+    --light-color: #ecf0f1;
+    --dark-color: #2c3e50;
+    --success-color: #2ecc71;
+    --warning-color: #f39c12;
+    --text-color: #34495e;
+    --text-light: #7f8c8d;
+    --white: #ffffff;
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --transition: all 0.3s ease;
+}
+
+body {
+    font-family: 'Segoe UI', 'Roboto', sans-serif;
+    color: var(--text-color);
+    background-color: var(--light-color);
+    line-height: 1.6;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.navbar-custom {
+    background-color: var(--white);
+    box-shadow: var(--shadow);
+    padding: 0.8rem 0;
+}
+
+.brand-logo {
+    width: 40px;
+    height: 40px;
+    background-color: var(--primary-color);
+    color: var(--white);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 10px;
+}
+
+.brand-text {
+    font-weight: 700;
+    font-size: 1.4rem;
+}
+
+.brand-text span {
+    color: var(--primary-color);
+}
+
+.navbar-nav .nav-link {
+    color: var(--text-color);
+    transition: var(--transition);
+}
+
+.navbar-nav .nav-link.active, .navbar-nav .nav-link:hover {
+    color: var(--primary-color);
+}
+
+.theme-switch .switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 22px;
+}
+.theme-switch .switch input { display: none; }
+.theme-switch .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 22px;
+}
+.theme-switch .slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+.theme-switch input:checked + .slider {
+    background-color: var(--primary-color);
+}
+.theme-switch input:checked + .slider:before {
+    transform: translateX(18px);
+}
+
+.user-section {
+    display: flex;
+    align-items: center;
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.user-section i {
+    font-size: 1.4rem;
+    margin-right: 8px;
+    color: var(--primary-color);
+}
+
+.prestamos-main-container {
+    background: var(--white);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    margin-top: 2rem;
+    padding: 2rem 2rem 1.5rem 2rem;
+}
+
+.table {
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    margin-bottom: 0;
+}
+
+.table thead {
+    background: var(--light-color);
+}
+
+.table th, .table td {
+    vertical-align: middle;
+    text-align: center;
+}
+
+.btn-primary {
+    background-color: #007bff !important;
+    color: #fff !important;
+    border: 1.5px solid #007bff !important;
+    box-shadow: none;
+}
+.btn-primary:hover, .btn-primary:focus {
+    background-color: #0056b3 !important;
+    color: #fff !important;
+    border-color: #0056b3 !important;
+}
+
+.btn-secondary {
+    background-color: var(--secondary-color);
+    border: none;
+    transition: var(--transition);
+}
+.btn-secondary:hover {
+    background-color: #1a242f;
+}
+
+/* Botón editar (azul puro como materiales) y eliminar (rojo) igual que materiales y socios */
+.btn-danger {
+    background-color: #e74c3c !important;
+    color: #fff !important;
+    border: 1.5px solid #e74c3c !important;
+    box-shadow: none;
+}
+.btn-danger:hover, .btn-danger:focus {
+    background-color: #c0392b !important;
+    color: #fff !important;
+    border-color: #c0392b !important;
+}
+
+.pagination .page-link {
+    color: var(--primary-color);
+}
+.pagination .page-item.active .page-link {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.modal-content {
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+}
+
+.form-label {
+    font-weight: 500;
+}
+
+.form-control, .form-select {
+    border-radius: 6px;
+    box-shadow: none;
+    border: 1px solid #d1d5db;
+    transition: var(--transition);
+}
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.15);
+}
+
+/* Estilos de badges para prestamos */
+.badge-success {
+    background-color: #28a745 !important;
+    color: #fff !important;
+}
+.badge-danger {
+    background-color: #dc3545 !important;
+    color: #fff !important;
+}
+
+body[data-theme="dark"] .prestamos-main-container .badge-success {
+    background-color: #28a745 !important;
+    color: #fff !important;
+}
+body[data-theme="dark"] .prestamos-main-container .badge-danger {
+    background-color: #dc3545 !important;
+    color: #fff !important;
+}
+
+/* Iconos acción: editar azul, borrar rojo en dark mode para btn-primary y btn-danger */
+body[data-theme="dark"] .prestamos-main-container .btn-primary i,
+body[data-theme="dark"] .prestamos-main-container .btn-primary svg {
+    color: #007bff !important;
+}
+body[data-theme="dark"] .prestamos-main-container .btn-danger i,
+body[data-theme="dark"] .prestamos-main-container .btn-danger svg {
+    color: #dc3545 !important;
+}
+
+/* --- DARK MODE PRESTAMOS SIMILAR A MATERIALES --- */
+body[data-theme="dark"] .prestamos-main-container {
+    background-color: #181b20 !important;
+    color: #fff !important;
+    border-radius: 18px;
+    box-shadow: 0 2px 24px rgba(0,0,0,0.45);
+    border: 1.5px solid #23272f;
+}
+body[data-theme="dark"] .prestamos-main-container table,
+body[data-theme="dark"] .prestamos-main-container thead,
+body[data-theme="dark"] .prestamos-main-container tbody {
+    background-color: #181b20 !important;
+    color: #fff !important;
+    border-color: #23272f !important;
+}
+body[data-theme="dark"] .prestamos-main-container tr,
+body[data-theme="dark"] .prestamos-main-container th,
+body[data-theme="dark"] .prestamos-main-container td {
+    background-color: #181b20 !important;
+    color: #fff !important;
+    border-color: #23272f !important;
+}
+body[data-theme="dark"] .prestamos-main-container .table-hover tbody tr:hover {
+    background-color: #23272f !important;
+}
+body[data-theme="dark"] .prestamos-main-container .table-light {
+    background-color: #23272f !important;
+    color: #fff !important;
+    border-bottom: 2px solid #23272f !important;
+}
+body[data-theme="dark"] .prestamos-main-container .form-control,
+body[data-theme="dark"] .prestamos-main-container .form-select {
+    background-color: #23272f;
+    color: #fff;
+    border-color: #444a57;
+}
+body[data-theme="dark"] .prestamos-main-container .form-control:focus,
+body[data-theme="dark"] .prestamos-main-container .form-select:focus {
+    background-color: #23272f;
+    color: #fff;
+    border-color: var(--primary-color);
+}
+body[data-theme="dark"] .prestamos-main-container .modal-content {
+    background-color: #23272f;
+    color: #fff;
+    border: 1px solid #444a57;
+}
+body[data-theme="dark"] .prestamos-main-container table tr {
+    border-bottom: 1.5px solid #23272f !important;
+}
+body[data-theme="dark"] .prestamos-main-container table tr:last-child {
+    border-bottom: none !important;
+}
+
+@media (max-width: 768px) {
+    .prestamos-main-container {
+        padding: 1rem 0.5rem;
+    }
+    .table-responsive {
+        font-size: 0.95rem;
+    }
+}

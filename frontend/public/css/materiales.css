@@ -400,15 +400,173 @@ body[data-theme="dark"] .table-light {
     color: var(--text-color) !important;
 }
 
+/* Paginación */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    list-style: none;
+    padding: 0;
+    margin: 1.5rem 0;
+}
+
+.pagination li {
+    margin: 0 0.2rem;
+}
+
+.page-link {
+    display: block;
+    padding: 0.5rem 1rem;
+    color: var(--primary-color);
+    background-color: var(--white);
+    border: 1px solid var(--primary-color);
+    border-radius: 0.25rem;
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.page-link:hover {
+    background-color: var(--primary-color);
+    color: var(--white);
+}
+
+.page-item.active .page-link {
+    background-color: var(--primary-color);
+    color: var(--white);
+    border-color: var(--primary-color);
+}
+
+/* Estilos para la paginación en modo oscuro */
+body[data-theme="dark"] .pagination {
+    color: #fff;
+}
+
 body[data-theme="dark"] .pagination .page-link {
     background-color: #23272f;
     color: var(--text-color);
     border-color: #444a57;
 }
+
 body[data-theme="dark"] .pagination .page-item.active .page-link {
     background-color: var(--primary-color);
     color: #fff;
     border-color: var(--primary-color);
+}
+
+
+
+/* --- ESTILO DARK MODE MATERIALES SIMILAR A SOCIOS --- */
+body[data-theme="dark"] .materiales-main-container {
+    background-color: #181b20 !important;
+    color: #fff !important;
+    border-radius: 18px;
+    box-shadow: 0 2px 24px rgba(0,0,0,0.45);
+    border: 1.5px solid #23272f;
+}
+body[data-theme="dark"] .materiales-main-container table,
+body[data-theme="dark"] .materiales-main-container thead,
+body[data-theme="dark"] .materiales-main-container tbody {
+    background-color: #181b20 !important;
+    color: #fff !important;
+    border-color: #23272f !important;
+}
+body[data-theme="dark"] .materiales-main-container tr,
+body[data-theme="dark"] .materiales-main-container th,
+body[data-theme="dark"] .materiales-main-container td {
+    background-color: #181b20 !important;
+    color: #fff !important;
+    border-color: #23272f !important;
+}
+body[data-theme="dark"] .materiales-main-container .table-hover tbody tr:hover {
+    background-color: #23272f !important;
+}
+body[data-theme="dark"] .materiales-main-container .table-light {
+    background-color: #23272f !important;
+    color: #fff !important;
+    border-bottom: 2px solid #23272f !important;
+}
+body[data-theme="dark"] .materiales-main-container .form-control,
+body[data-theme="dark"] .materiales-main-container .form-select {
+    background-color: #23272f;
+    color: #fff;
+    border-color: #444a57;
+}
+body[data-theme="dark"] .materiales-main-container .form-control:focus,
+body[data-theme="dark"] .materiales-main-container .form-select:focus {
+    background-color: #23272f;
+    color: #fff;
+    border-color: var(--primary-color);
+}
+body[data-theme="dark"] .materiales-main-container .modal-content {
+    background-color: #23272f;
+    color: #fff;
+    border: 1px solid #444a57;
+}
+body[data-theme="dark"] .materiales-main-container table tr {
+    border-bottom: 1.5px solid #23272f !important;
+}
+body[data-theme="dark"] .materiales-main-container table tr:last-child {
+    border-bottom: none !important;
+}
+
+.materiales-main-container {
+    background-color: var(--white);
+    color: var(--text-color);
+    border-radius: 18px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.13);
+    border: 1.5px solid #e0e0e0;
+    max-width: 98vw;
+    margin-top: 2.5rem;
+    padding: 2.5rem 2rem 2rem 2rem;
+    transition: none;
+}
+
+.materiales-main-container:focus-within,
+.materiales-main-container:hover {
+    box-shadow: 0 4px 24px rgba(0,0,0,0.13);
+    border-color: #e0e0e0;
+}
+
+/* Badges dark mode solo colores esenciales */
+.badge-success {
+    background-color: #28a745 !important;
+    color: #fff !important;
+}
+.badge-danger {
+    background-color: #dc3545 !important;
+    color: #fff !important;
+}
+
+body[data-theme="dark"] .materiales-main-container .badge-success {
+    background-color: #28a745 !important;
+    color: #fff !important;
+}
+body[data-theme="dark"] .materiales-main-container .badge-danger {
+    background-color: #dc3545 !important;
+    color: #fff !important;
+}
+
+/* Iconos acción: editar azul, borrar rojo en dark mode para btn-primary y btn-danger */
+body[data-theme="dark"] .materiales-main-container .btn-primary i,
+body[data-theme="dark"] .materiales-main-container .btn-primary svg {
+    color: #007bff !important;
+}
+body[data-theme="dark"] .materiales-main-container .btn-danger i,
+body[data-theme="dark"] .materiales-main-container .btn-danger svg {
+    color: #dc3545 !important;
+}
+
+/* Input de búsqueda de materiales: texto y placeholder visibles en dark mode */
+body[data-theme="dark"] .materiales-main-container input[type="search"],
+body[data-theme="dark"] .materiales-main-container input[type="text"] {
+    background-color: #23272f !important;
+    color: #fff !important;
+    border-color: #444a57 !important;
+}
+body[data-theme="dark"] .materiales-main-container input[type="search"]::placeholder,
+body[data-theme="dark"] .materiales-main-container input[type="text"]::placeholder {
+    color: #b0b0b0 !important;
+    opacity: 1 !important;
 }
 
 /* Responsive */

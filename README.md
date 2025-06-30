@@ -12,7 +12,7 @@ Este es el sistema desarrollado para el trabajo final de las materias **Programa
 ## Requisitos previos
 - Tener instalado Node.js
 - Driver JDBC de Sybase (`jconn3.jar`)
-- ODBC configurado con DSN a `prueba01.db`
+- ODBC configurado con DSN a `biblioteca.db`
 
 ## Instalación
 1. Clonar repositorio

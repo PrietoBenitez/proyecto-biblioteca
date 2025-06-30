@@ -31,19 +31,41 @@ exports.getSocioById = async (req, res) => {
 exports.createSocio = async (req, res) => {
     const socio = req.body;
 
+    // Solo los campos válidos según la base de datos
     const {
-        documento_identidad,
-        nombre_completo,
-        fecha_nacimiento,
-        fecha_inscripcion
+        NOMBRE,
+        APELLIDO,
+        CEDULA,
+        CORREO,
+        DIRECCION,
+        FECHA_NACIMIENTO,
+        FECHA_INSCRIPCION,
+        NACIONALIDAD,
+        EDUCACION_ID,
+        PROFESION_ID,
+        INSTITUCION_ID
     } = socio;
 
-    if (!documento_identidad || !nombre_completo || !fecha_nacimiento || !fecha_inscripcion) {
-        return res.status(400).json({ error: 'Faltan campos obligatorios' });
+    // Validación de campos obligatorios según la tabla SOCIOS
+    if (!NOMBRE || !APELLIDO || !CEDULA || !FECHA_NACIMIENTO) {
+        return res.status(400).json({ error: 'Faltan campos obligatorios: NOMBRE, APELLIDO, CEDULA, FECHA_NACIMIENTO' });
     }
 
+    // FECHA_INSCRIPCION puede ser null, la base de datos lo pone por defecto
     try {
-        await sociosModel.createSocio(socio);
+        await sociosModel.createSocio({
+            NOMBRE,
+            APELLIDO,
+            CEDULA,
+            CORREO: CORREO || null,
+            DIRECCION: DIRECCION || null,
+            FECHA_NACIMIENTO,
+            FECHA_INSCRIPCION: FECHA_INSCRIPCION || null,
+            NACIONALIDAD: NACIONALIDAD || null,
+            EDUCACION_ID: EDUCACION_ID || null,
+            PROFESION_ID: PROFESION_ID || null,
+            INSTITUCION_ID: INSTITUCION_ID || null
+        });
         res.status(201).json({ message: 'Socio creado exitosamente' });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -55,8 +77,39 @@ exports.updateSocio = async (req, res) => {
     const { id } = req.params;
     const socio = req.body;
 
+    // Solo los campos válidos según la base de datos
+    const {
+        NOMBRE,
+        APELLIDO,
+        CEDULA,
+        CORREO,
+        DIRECCION,
+        FECHA_NACIMIENTO,
+        FECHA_INSCRIPCION,
+        NACIONALIDAD,
+        EDUCACION_ID,
+        PROFESION_ID,
+        INSTITUCION_ID
+    } = socio;
+
+    if (!NOMBRE || !APELLIDO || !CEDULA || !FECHA_NACIMIENTO) {
+        return res.status(400).json({ error: 'Faltan campos obligatorios: NOMBRE, APELLIDO, CEDULA, FECHA_NACIMIENTO' });
+    }
+
     try {
-        const result = await sociosModel.updateSocio(id, socio);
+        const result = await sociosModel.updateSocio(id, {
+            NOMBRE,
+            APELLIDO,
+            CEDULA,
+            CORREO: CORREO || null,
+            DIRECCION: DIRECCION || null,
+            FECHA_NACIMIENTO,
+            FECHA_INSCRIPCION: FECHA_INSCRIPCION || null,
+            NACIONALIDAD: NACIONALIDAD || null,
+            EDUCACION_ID: EDUCACION_ID || null,
+            PROFESION_ID: PROFESION_ID || null,
+            INSTITUCION_ID: INSTITUCION_ID || null
+        });
 
         if (!result || result.affectedRows === 0 || result.count === 0) {
             return res.status(404).json({ message: 'Socio no encontrado' });
@@ -84,17 +137,6 @@ exports.deleteSocio = async (req, res) => {
         // Si hay sanciones activas, el trigger de la DB impedirá el borrado y enviará un mensaje de error.
         // Mostramos el mensaje del trigger.
         res.status(500).json({ error: error.message });
-    }
-};
-
-// Obtener estados únicos de la tabla Socios
-exports.getEstadosUnicos = async (req, res) => {
-    try {
-        const estados = await sociosModel.getEstadosUnicos();
-        res.json(estados);
-    } catch (error) {
-        console.error('Error en getEstadosUnicos:', error);
-        res.status(500).json({ error: error.message, stack: error.stack, raw: error });
     }
 };
 
@@ -129,13 +171,7 @@ exports.getSancionesYEstadoBySocio = async (req, res) => {
     const { id } = req.params;
     try {
         const sanciones = await sociosModel.getSancionesActivasBySocio(id);
-        const socio = await sociosModel.getSocioById(id);
-        const estado = socio ? socio.estado : null;
-
-        res.json({
-            sanciones,
-            estado
-        });
+        res.json({ sanciones }); // Solo devolvemos sanciones
     } catch (error) {
         console.error('Error en getSancionesYEstadoBySocio:', error);
         res.status(500).json({ error: error.message });
@@ -154,6 +190,43 @@ exports.agregarSancionASocio = async (req, res) => {
     try {
         await sociosModel.agregarSancionASocio({ socio_id, motivo, fecha_inicio, fecha_fin });
         res.status(201).json({ message: 'Sanción agregada correctamente.' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// Listados para selects de formulario de socios
+exports.getNacionalidades = async (req, res) => {
+    try {
+        const nacionalidades = await sociosModel.getAllNacionalidades();
+        res.json(nacionalidades);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.getEducaciones = async (req, res) => {
+    try {
+        const educaciones = await sociosModel.getAllEducaciones();
+        res.json(educaciones);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.getProfesiones = async (req, res) => {
+    try {
+        const profesiones = await sociosModel.getAllProfesiones();
+        res.json(profesiones);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.getInstituciones = async (req, res) => {
+    try {
+        const instituciones = await sociosModel.getAllInstituciones();
+        res.json(instituciones);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

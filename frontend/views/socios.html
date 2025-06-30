@@ -39,7 +39,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">
+                        <a class="nav-link" href="/prestamos">
                             <i class="fas fa-exchange-alt"></i> Préstamos
                         </a>
                     </li>
@@ -69,7 +69,7 @@
 </nav>
 
     <!-- Contenido principal -->
-    <main class="container py-4">
+    <main class="container py-4 socios-main-container">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2 class="mb-0"><i class="fas fa-users me-2"></i>Gestión de Socios</h2>
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalSocio">
@@ -78,32 +78,40 @@
         </div>
         <!-- Filtros -->
         <div class="row mb-3">
-            <div class="col-md-4">
+            <div class="col-md-4 mb-2 mb-md-0">
                 <input type="text" class="form-control" id="inputFiltroTexto" placeholder="Buscar socio...">
             </div>
-            <div class="col-md-4">
-                <select class="form-select" id="inputFiltroEstado">
-                    <option value="">Todos</option>
+            <div class="col-md-3 mb-2 mb-md-0">
+                <select class="form-select" id="filtroEstadoSocio">
+                    <option value="">Todos los estados</option>
+                    <option value="activo">Activo</option>
+                    <option value="sancionado">Sancionado</option>
                 </select>
             </div>
         </div>
         <!-- Tabla de socios -->
-        <div class="table-responsive">
-            <table class="table table-hover align-middle" id="tablaSocios">
-                <thead class="table-light">
-                    <tr>
-                        <th>Documento</th>
-                        <th>Nombre Completo</th>
-                        <th>Email</th>
-                        <th>Estado</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Datos se cargarán dinámicamente -->
-                </tbody>
-            </table>
-        </div>
+        <table class="table table-hover align-middle w-100" id="tablaSocios" style="min-width:unset;">
+            <thead class="table-light">
+                <tr>
+                    <th>Cédula</th>
+                    <th>Nombre</th>
+                    <th>Apellido</th>
+                    <th>Email</th>
+                    <th>Dirección</th>
+                    <th>Fecha Nac.</th>
+                    <th>Fecha Inscripción</th>
+                    <th>Nacionalidad</th>
+                    <th>Educación</th>
+                    <th>Profesión</th>
+                    <th>Institución</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Datos se cargarán dinámicamente -->
+            </tbody>
+        </table>
         <!-- Paginación -->
         <nav aria-label="Page navigation">
             <ul class="pagination justify-content-center mt-3" id="paginacion">
@@ -124,56 +132,55 @@
                         <input type="hidden" id="socioId">
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="documento_identidad" class="form-label">Documento de Identidad*</label>
-                                <input type="text" class="form-control" id="documento_identidad" required>
+                                <label for="CEDULA" class="form-label">Cédula*</label>
+                                <input type="text" class="form-control" id="CEDULA" required>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="nombre_completo" class="form-label">Nombre Completo*</label>
-                                <input type="text" class="form-control" id="nombre_completo" required>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="fecha_nacimiento" class="form-label">Fecha de Nacimiento*</label>
-                                <input type="date" class="form-control" id="fecha_nacimiento" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="fecha_inscripcion" class="form-label">Fecha de Inscripción*</label>
-                                <input type="date" class="form-control" id="fecha_inscripcion" required>
+                                <label for="NOMBRE" class="form-label">Nombre*</label>
+                                <input type="text" class="form-control" id="NOMBRE" required>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="email" class="form-label">Email</label>
-                                <input type="email" class="form-control" id="email">
+                                <label for="APELLIDO" class="form-label">Apellido*</label>
+                                <input type="text" class="form-control" id="APELLIDO" required>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="estado" class="form-label">Estado</label>
-                                <select class="form-select" id="estado">
-                                </select>
+                                <label for="FECHA_NACIMIENTO" class="form-label">Fecha de Nacimiento*</label>
+                                <input type="date" class="form-control" id="FECHA_NACIMIENTO" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="FECHA_INSCRIPCION" class="form-label">Fecha de Inscripción</label>
+                                <input type="date" class="form-control" id="FECHA_INSCRIPCION">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="CORREO" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="CORREO">
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label for="direccion" class="form-label">Dirección</label>
-                            <input type="text" class="form-control" id="direccion">
+                            <label for="DIRECCION" class="form-label">Dirección</label>
+                            <input type="text" class="form-control" id="DIRECCION">
                         </div>
                         <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label for="nacionalidad" class="form-label">Nacionalidad</label>
-                                <input type="text" class="form-control" id="nacionalidad">
+                            <div class="col-md-3 mb-3">
+                                <label for="NACIONALIDAD" class="form-label">Nacionalidad</label>
+                                <select class="form-select" id="NACIONALIDAD"></select>
                             </div>
-                            <div class="col-md-4 mb-3">
-                                <label for="nivel_educativo" class="form-label">Nivel Educativo</label>
-                                <input type="text" class="form-control" id="nivel_educativo">
+                            <div class="col-md-3 mb-3">
+                                <label for="EDUCACION_ID" class="form-label">Educación</label>
+                                <select class="form-select" id="EDUCACION_ID"></select>
                             </div>
-                            <div class="col-md-4 mb-3">
-                                <label for="profesion" class="form-label">Profesión</label>
-                                <input type="text" class="form-control" id="profesion">
+                            <div class="col-md-3 mb-3">
+                                <label for="PROFESION_ID" class="form-label">Profesión</label>
+                                <select class="form-select" id="PROFESION_ID"></select>
                             </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="institucion_referente" class="form-label">Institución Referente</label>
-                            <input type="text" class="form-control" id="institucion_referente">
+                            <div class="col-md-3 mb-3">
+                                <label for="INSTITUCION_ID" class="form-label">Institución</label>
+                                <select class="form-select" id="INSTITUCION_ID"></select>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -194,6 +201,30 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body" id="modalSancionesBody"></div>
+          <div id="formAgregarSancionContainer" class="p-3" style="display:none;">
+            <form id="formAgregarSancion">
+              <div class="mb-2">
+                <label for="motivoSancion" class="form-label">Motivo</label>
+                <input type="text" class="form-control" id="motivoSancion" required>
+              </div>
+              <div class="mb-2">
+                <label for="fechaInicioSancion" class="form-label">Fecha inicio</label>
+                <input type="date" class="form-control" id="fechaInicioSancion" required>
+              </div>
+              <div class="mb-2">
+                <label for="fechaFinSancion" class="form-label">Fecha fin (opcional)</label>
+                <input type="date" class="form-control" id="fechaFinSancion">
+              </div>
+              <button type="submit" class="btn btn-success">Guardar Sanción</button>
+              <button type="button" class="btn btn-link" id="btnCancelarAgregarSancion">Cancelar</button>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" id="btnAgregarSancionModal">
+              <i class="fas fa-plus"></i> Agregar Sanción
+            </button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+          </div>
         </div>
       </div>
     </div>

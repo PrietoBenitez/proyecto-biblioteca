@@ -1,42 +1,57 @@
 const { getConnection } = require('../config/db');
 
+// NUEVO: Utilizar nombres de campos reales de la tabla MATERIALES
 async function getAllMateriales() {
     const db = await getConnection();
-    const result = await db.query('SELECT * FROM Materiales');
+    const result = await db.query('SELECT * FROM MATERIALES ORDER BY NUMERO_ID DESC');
     await db.close();
-    return result;
+    return Array.isArray(result.rows) ? result.rows : result;
 }
 
+// NUEVO: Utilizar JOINs para traer los valores descriptivos de claves foráneas
 async function getMaterialById(id) {
     const db = await getConnection();
-    const result = await db.query('SELECT * FROM Materiales WHERE id = ?', [id]);
+    const result = await db.query(`
+        SELECT m.*, 
+            s.SUBTIPO as SUBTIPO_DESC, 
+            s.CATEGORIA_ID as CATEGORIA_ID, 
+            c.CATEGORIA as CATEGORIA_DESC,
+            p.PAIS as PAIS_DESC, 
+            d.NOMBRE as DONANTE_NOMBRE, d.APELLIDO as DONANTE_APELLIDO
+        FROM MATERIALES m
+        LEFT JOIN SUBTIPO s ON m.SUBTIPO_ID = s.SUBTIPO_ID
+        LEFT JOIN CATEGORIAS c ON s.CATEGORIA_ID = c.CATEGORIA_ID
+        LEFT JOIN PAISES p ON m.NACIONALIDAD = p.NACIONALIDAD
+        LEFT JOIN DONANTES d ON m.DONANTE_ID = d.DONANTE_ID
+        WHERE m.NUMERO_ID = ?
+    `, [id]);
     await db.close();
-    return result[0];
+    return Array.isArray(result.rows) ? result.rows[0] : result[0];
 }
 
 async function createMaterial(data) {
     const db = await getConnection();
     const insertQuery = `
-        INSERT INTO Materiales (
-            nombre, categoria, subtipo, tipo_material, formato, ubicacion, valor_estimado, pais_origen, descripcion, estado, es_restringido, donado, nombre_donante, fecha_donacion, estado_al_donar
+        INSERT INTO MATERIALES (
+            SUBTIPO_ID, NACIONALIDAD, DONANTE_ID, NOMBRE, FORMATO, UBICACION, VALOR_GS, TIPO_MATERIAL, CONDICION, DESCRIPCION, DISPONIBILIDAD, RESTRINGIDO, DONADO, FECHA_DONACION, ESTADO_DONACION
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const values = [
-        data.nombre,
-        data.categoria,
-        data.subtipo,
-        data.tipo_material,
-        data.formato || null,
-        data.ubicacion || null,
-        data.valor_estimado || null,
-        data.pais_origen || null,
-        data.descripcion || null,
-        data.estado || 'disponible',
-        data.es_restringido || 0,
-        data.donado || 0,
-        data.nombre_donante || null,
-        data.fecha_donacion || null,
-        data.estado_al_donar || null
+        data.SUBTIPO || null,
+        data.PAIS_ORIGEN || null,
+        data.NOMBRE_DONANTE || null,
+        data.NOMBRE,
+        data.FORMATO || null,
+        data.UBICACION || null,
+        data.VALOR_ESTIMADO || null,
+        data.TIPO_MATERIAL || null,
+        data.CONDICION || 'B',
+        data.DESCRIPCION || null,
+        data.ESTADO || 'D',
+        data.ES_RESTRINGIDO || 'N',
+        data.DONADO || 'N',
+        data.FECHA_DONACION || null,
+        data.ESTADO_AL_DONAR || null
     ];
     const result = await db.query(insertQuery, values);
     await db.close();
@@ -46,40 +61,40 @@ async function createMaterial(data) {
 async function updateMaterial(id, data) {
     const db = await getConnection();
     const updateQuery = `
-        UPDATE Materiales SET
-            nombre = ?,
-            categoria = ?,
-            subtipo = ?,
-            tipo_material = ?,
-            formato = ?,
-            ubicacion = ?,
-            valor_estimado = ?,
-            pais_origen = ?,
-            descripcion = ?,
-            estado = ?,
-            es_restringido = ?,
-            donado = ?,
-            nombre_donante = ?,
-            fecha_donacion = ?,
-            estado_al_donar = ?
-        WHERE id = ?
+        UPDATE MATERIALES SET
+            SUBTIPO_ID = ?,
+            NACIONALIDAD = ?,
+            DONANTE_ID = ?,
+            NOMBRE = ?,
+            FORMATO = ?,
+            UBICACION = ?,
+            VALOR_GS = ?,
+            TIPO_MATERIAL = ?,
+            CONDICION = ?,
+            DESCRIPCION = ?,
+            DISPONIBILIDAD = ?,
+            RESTRINGIDO = ?,
+            DONADO = ?,
+            FECHA_DONACION = ?,
+            ESTADO_DONACION = ?
+        WHERE NUMERO_ID = ?
     `;
     const values = [
-        data.nombre,
-        data.categoria,
-        data.subtipo,
-        data.tipo_material,
-        data.formato || null,
-        data.ubicacion || null,
-        data.valor_estimado || null,
-        data.pais_origen || null,
-        data.descripcion || null,
-        data.estado || 'disponible',
-        data.es_restringido || 0,
-        data.donado || 0,
-        data.nombre_donante || null,
-        data.fecha_donacion || null,
-        data.estado_al_donar || null,
+        data.SUBTIPO || null,
+        data.PAIS_ORIGEN || null,
+        data.NOMBRE_DONANTE || null,
+        data.NOMBRE,
+        data.FORMATO || null,
+        data.UBICACION || null,
+        data.VALOR_ESTIMADO || null,
+        data.TIPO_MATERIAL || null,
+        data.CONDICION || 'B',
+        data.DESCRIPCION || null,
+        data.ESTADO || 'D',
+        data.ES_RESTRINGIDO || 'N',
+        data.DONADO || 'N',
+        data.FECHA_DONACION || null,
+        data.ESTADO_AL_DONAR || null,
         id
     ];
     const result = await db.query(updateQuery, values);
@@ -89,45 +104,62 @@ async function updateMaterial(id, data) {
 
 async function deleteMaterial(id) {
     const db = await getConnection();
-    const result = await db.query('DELETE FROM Materiales WHERE id = ?', [id]);
+    const result = await db.query('DELETE FROM MATERIALES WHERE NUMERO_ID = ?', [id]);
     await db.close();
     return { affectedRows: result.count || result.affectedRows || 0 };
 }
 
-// Filtros y paginación (similar a socios)
-async function getMaterialesFiltrados(texto, estado, page = 1, limit = 10) {
-    let baseQuery = 'FROM Materiales WHERE 1=1';
+// Filtros y paginación
+async function getMaterialesFiltrados(texto, estado, condicion, page = 1, limit = 10) {
+    let baseQuery = `FROM MATERIALES m
+        LEFT JOIN SUBTIPO s ON m.SUBTIPO_ID = s.SUBTIPO_ID
+        LEFT JOIN CATEGORIAS c ON s.CATEGORIA_ID = c.CATEGORIA_ID
+        LEFT JOIN PAISES p ON m.NACIONALIDAD = p.NACIONALIDAD
+        LEFT JOIN DONANTES d ON m.DONANTE_ID = d.DONANTE_ID
+    WHERE 1=1`;
     let where = '';
     const mainParams = [];
     if (texto) {
-        where += " AND (nombre LIKE ? OR categoria LIKE ? OR tipo_material LIKE ? OR descripcion LIKE ? OR ubicacion LIKE ?)";
-        mainParams.push(`%${texto}%`, `%${texto}%`, `%${texto}%`, `%${texto}%`, `%${texto}%`);
+        where += " AND (m.NOMBRE LIKE ? OR m.TIPO_MATERIAL LIKE ? OR m.DESCRIPCION LIKE ? OR m.UBICACION LIKE?" +
+            " OR s.SUBTIPO LIKE ? OR c.CATEGORIA LIKE ? OR p.PAIS LIKE ? OR d.NOMBRE LIKE ? OR d.APELLIDO LIKE ?)";
+        mainParams.push(`%${texto}%`, `%${texto}%`, `%${texto}%`, `%${texto}%`, `%${texto}%`, `%${texto}%`, `%${texto}%`, `%${texto}%`, `%${texto}%`);
     }
     if (estado) {
-        where += ' AND estado = ?';
+        where += ' AND m.DISPONIBILIDAD = ?';
         mainParams.push(estado);
+    }
+    if (condicion) {
+        where += ' AND m.CONDICION = ?';
+        mainParams.push(condicion);
     }
     let subWhere = '';
     const subParams = [];
     if (texto) {
-        subWhere += " AND (nombre LIKE ? OR categoria LIKE ? OR tipo_material LIKE ? OR descripcion LIKE ? OR ubicacion LIKE ?)";
-        subParams.push(`%${texto}%`, `%${texto}%`, `%${texto}%`, `%${texto}%`, `%${texto}%`);
+        subWhere += " AND (m.NOMBRE LIKE ? OR m.TIPO_MATERIAL LIKE ? OR m.DESCRIPCION LIKE ? OR m.UBICACION LIKE?" +
+            " OR s.SUBTIPO LIKE ? OR c.CATEGORIA LIKE ? OR p.PAIS LIKE ? OR d.NOMBRE LIKE ? OR d.APELLIDO LIKE ?)";
+        subParams.push(`%${texto}%`, `%${texto}%`, `%${texto}%`, `%${texto}%`, `%${texto}%`, `%${texto}%`, `%${texto}%`, `%${texto}%`, `%${texto}%`);
     }
     if (estado) {
-        subWhere += ' AND estado = ?';
+        subWhere += ' AND m.DISPONIBILIDAD = ?';
         subParams.push(estado);
+    }
+    if (condicion) {
+        subWhere += ' AND m.CONDICION = ?';
+        subParams.push(condicion);
     }
     const offset = (page - 1) * limit;
     let query = '';
     let queryParams = [];
     if (offset > 0) {
-        query = `SELECT TOP ${limit} * ${baseQuery}${where} AND id NOT IN (SELECT TOP ${offset} id ${baseQuery}${subWhere} ORDER BY id DESC) ORDER BY id DESC`;
+        query = `SELECT TOP ${limit} m.*, s.SUBTIPO as SUBTIPO_DESC, c.CATEGORIA as CATEGORIA_DESC, p.PAIS as PAIS_DESC, d.NOMBRE as DONANTE_NOMBRE, d.APELLIDO as DONANTE_APELLIDO ` +
+            baseQuery + where + ` AND m.NUMERO_ID NOT IN (SELECT TOP ${offset} m.NUMERO_ID ` + baseQuery + subWhere + ` ORDER BY m.NUMERO_ID DESC) ORDER BY m.NUMERO_ID DESC`;
         queryParams = [...mainParams, ...subParams];
     } else {
-        query = `SELECT TOP ${limit} * ${baseQuery}${where} ORDER BY id DESC`;
+        query = `SELECT TOP ${limit} m.*, s.SUBTIPO as SUBTIPO_DESC, c.CATEGORIA as CATEGORIA_DESC, p.PAIS as PAIS_DESC, d.NOMBRE as DONANTE_NOMBRE, d.APELLIDO as DONANTE_APELLIDO ` +
+            baseQuery + where + ` ORDER BY m.NUMERO_ID DESC`;
         queryParams = mainParams;
     }
-    const countQuery = `SELECT COUNT(*) as total ${baseQuery}${where}`;
+    const countQuery = `SELECT COUNT(*) as total ` + baseQuery + where;
     const countParams = [...mainParams];
 
     const db = await getConnection();
@@ -147,18 +179,57 @@ async function getMaterialesFiltrados(texto, estado, page = 1, limit = 10) {
     return { materiales, total };
 }
 
-// async function getEstadosUnicosMateriales() {
-//     const db = await getConnection();
-//     const result = await db.query('SELECT DISTINCT estado FROM Materiales');
-//     await db.close();
-//     if (Array.isArray(result)) {
-//         return result.filter(e => Object.prototype.hasOwnProperty.call(e, 'estado'));
-//     }
-//     if (result && Array.isArray(result.rows)) {
-//         return result.rows.filter(e => Object.prototype.hasOwnProperty.call(e, 'estado'));
-//     }
-//     return [];
-// }
+// Obtener categorías
+async function getCategorias() {
+    try {
+        const db = await getConnection();
+        const result = await db.query('SELECT CATEGORIA_ID, CATEGORIA FROM DBA.CATEGORIAS ORDER BY CATEGORIA');
+        await db.close();
+        return Array.isArray(result.rows) ? result.rows : result;
+    } catch (error) {
+        console.error('Error en getCategorias:', error);
+        throw error;
+    }
+}
+
+// Obtener subtipos
+async function getSubtipos() {
+    try {
+        const db = await getConnection();
+        const result = await db.query('SELECT SUBTIPO_ID, SUBTIPO FROM DBA.SUBTIPO ORDER BY SUBTIPO');
+        await db.close();
+        return Array.isArray(result.rows) ? result.rows : result;
+    } catch (error) {
+        console.error('Error en getSubtipos:', error);
+        throw error;
+    }
+}
+
+// Obtener países
+async function getPaises() {
+    try {
+        const db = await getConnection();
+        const result = await db.query('SELECT NACIONALIDAD, PAIS FROM DBA.PAISES ORDER BY PAIS');
+        await db.close();
+        return Array.isArray(result.rows) ? result.rows : result;
+    } catch (error) {
+        console.error('Error en getPaises:', error);
+        throw error;
+    }
+}
+
+// Obtener donantes
+async function getDonantes() {
+    try {
+        const db = await getConnection();
+        const result = await db.query('SELECT DONANTE_ID, NOMBRE, APELLIDO FROM DBA.DONANTES ORDER BY NOMBRE');
+        await db.close();
+        return Array.isArray(result.rows) ? result.rows : result;
+    } catch (error) {
+        console.error('Error en getDonantes:', error);
+        throw error;
+    }
+}
 
 module.exports = {
     getAllMateriales,
@@ -167,5 +238,9 @@ module.exports = {
     updateMaterial,
     deleteMaterial,
     getMaterialesFiltrados,
+    getCategorias,
+    getSubtipos,
+    getPaises,
+    getDonantes,
     // getEstadosUnicosMateriales,
 };

@@ -2,8 +2,11 @@ const express = require('express');
 const router = express.Router();
 const sociosController = require('../controllers/socios.controller');
 
-// GET /api/socios/estados  
-router.get('/estados', sociosController.getEstadosUnicos);
+// Endpoints para selects de formulario de socios (¡deben ir antes de las rutas dinámicas!)
+router.get('/nacionalidades', sociosController.getNacionalidades);
+router.get('/educaciones', sociosController.getEducaciones);
+router.get('/profesiones', sociosController.getProfesiones);
+router.get('/instituciones', sociosController.getInstituciones);
 
 // GET /api/socios/filtrados
 router.get('/filtrados', sociosController.getSociosFiltrados);

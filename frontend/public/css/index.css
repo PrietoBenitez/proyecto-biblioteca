@@ -400,16 +400,6 @@ body[data-theme="dark"] .table-light {
     color: var(--text-color) !important;
 }
 
-body[data-theme="dark"] .pagination .page-link {
-    background-color: #23272f;
-    color: var(--text-color);
-    border-color: #444a57;
-}
-body[data-theme="dark"] .pagination .page-item.active .page-link {
-    background-color: var(--primary-color);
-    color: #fff;
-    border-color: var(--primary-color);
-}
 
 /* Responsive */
 @media (max-width: 992px) {

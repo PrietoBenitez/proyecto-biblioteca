@@ -12,6 +12,7 @@ const sociosRoute = require('./backend/routes/socios.route');
 const materialesRoute = require('./backend/routes/materiales.route');
 const prestamosRoute = require('./backend/routes/prestamos.route');
 const devolucionesRoute = require('./backend/routes/devoluciones.route');
+const bibliotecariosRoute = require('./backend/routes/bibliotecarios.route');
 
 
 // Iniciar servidor
@@ -29,6 +30,7 @@ app.use('/api/socios', sociosRoute);
 app.use('/api/materiales', materialesRoute);
 app.use('/api/prestamos', prestamosRoute);
 app.use('/api/devoluciones', devolucionesRoute);
+app.use('/api/bibliotecarios', bibliotecariosRoute);
 
 // Ruta inicial
 app.get('/', (req, res) => {
@@ -41,6 +43,10 @@ app.get('/socios', (req, res) => {
 
 app.get('/materiales', (req, res) => {
     res.sendFile(path.join(__dirname, 'frontend/views/materiales.html'));
+});
+
+app.get('/prestamos', (req, res) => {
+    res.sendFile(path.join(__dirname, 'frontend/views/prestamos.html'));
 });
 
 // Iniciar servidor

@@ -223,14 +223,65 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Función para mostrar alertas flotantes (igual que préstamos)
+    function mostrarAlerta(mensaje, tipo = 'success') {
+        let alert = document.getElementById('alert-exito');
+        if (!alert) {
+            alert = document.createElement('div');
+            alert.id = 'alert-exito';
+            alert.className = 'alert position-fixed top-0 start-50 translate-middle-x mt-3 shadow';
+            alert.style.zIndex = 2000;
+            document.body.appendChild(alert);
+        }
+        alert.className = `alert alert-${tipo === 'danger' ? 'danger' : 'success'} position-fixed top-0 start-50 translate-middle-x mt-3 shadow`;
+        alert.textContent = mensaje;
+        alert.style.display = 'block';
+        setTimeout(() => { alert.style.display = 'none'; }, 2500);
+    }
+
+    // Extrae mensaje de RAISERROR Sybase (igual que préstamos)
+    function extraerMensajeRaiserror(resp) {
+        let msg = resp && resp.error ? resp.error : '';
+        if (resp && resp.odbcErrors && Array.isArray(resp.odbcErrors) && resp.odbcErrors.length > 0) {
+            const raiserror = resp.odbcErrors.find(e => e.message && e.message.includes('RAISERROR executed:'));
+            if (raiserror) {
+                let after = raiserror.message.split('RAISERROR executed:')[1];
+                let endIdx = after ? after.search(/(\\n|\n|\r|\r\n|$)/) : -1;
+                if (endIdx !== -1) {
+                    msg = after.slice(0, endIdx).trim();
+                } else {
+                    msg = after ? after.trim() : msg;
+                }
+            } else {
+                msg = resp.odbcErrors[0].message || msg;
+            }
+        } else if (msg && msg.includes('RAISERROR executed:')) {
+            let after = msg.split('RAISERROR executed:')[1];
+            let endIdx = after ? after.search(/(\\n|\n|\r|\r\n|$)/) : -1;
+            if (endIdx !== -1) {
+                msg = after.slice(0, endIdx).trim();
+            } else {
+                msg = after ? after.trim() : msg;
+            }
+        }
+        return msg;
+    }
+    function normalizarMensaje(s) {
+        return s ? s.replace(/\s+/g, ' ').trim().toLowerCase() : '';
+    }
+    // Mensajes personalizados para triggers de socios (puedes ampliar)
+    const mensajesTriggers = {
+        'el socio ya existe.': 'Ya existe un socio con esos datos.',
+        'no se puede eliminar el socio porque tiene préstamos activos.': 'No puedes eliminar un socio con préstamos activos.',
+        'no se puede eliminar el socio porque tiene sanciones activas.': 'No puedes eliminar un socio con sanciones activas.'
+    };
+
     // Formulario submit (crear/actualizar)
     formSocio.addEventListener('submit', async function(e) {
         e.preventDefault();
-
         const socioId = document.getElementById('socioId').value;
         const url = socioId ? `/api/socios/${socioId}` : '/api/socios';
         const method = socioId ? 'PUT' : 'POST';
-
         const socioData = {
             NOMBRE: document.getElementById('NOMBRE').value,
             APELLIDO: document.getElementById('APELLIDO').value,
@@ -244,7 +295,6 @@ document.addEventListener('DOMContentLoaded', function() {
             PROFESION_ID: document.getElementById('PROFESION_ID').value || null,
             INSTITUCION_ID: document.getElementById('INSTITUCION_ID').value || null
         };
-
         try {
             const response = await fetch(url, {
                 method: method,
@@ -253,16 +303,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 body: JSON.stringify(socioData)
             });
-
-            if (!response.ok) throw new Error(await response.text());
-
-            mostrarAlerta(`Socio ${socioId ? 'actualizado' : 'creado'} correctamente`, 'success');
-            modalSocio.hide();
-            cargarSocios();
-
+            let resp;
+            try {
+                resp = await response.json();
+            } catch (e) {
+                mostrarAlerta('Error inesperado del servidor.', 'danger');
+                throw e;
+            }
+            if (!resp.error) {
+                mostrarAlerta(`Socio ${socioId ? 'actualizado' : 'creado'} correctamente`, 'success');
+                modalSocio.hide();
+                cargarSocios();
+            } else {
+                let msg = extraerMensajeRaiserror(resp);
+                const msgNorm = normalizarMensaje(msg);
+                if (mensajesTriggers[msgNorm]) {
+                    mostrarAlerta(mensajesTriggers[msgNorm], 'danger');
+                } else {
+                    mostrarAlerta(msg, 'danger');
+                }
+            }
         } catch (error) {
-            console.error('Error al guardar socio:', error);
-            mostrarAlerta(error.message, 'danger');
+            mostrarAlerta('Error al guardar socio.', 'danger');
         }
     });
 
@@ -312,29 +374,33 @@ document.addEventListener('DOMContentLoaded', function() {
     // Eliminar socio
     async function eliminarSocio(e) {
         if (!confirm('¿Estás seguro de eliminar este socio?')) return;
-
         const socioId = e.target.closest('button').dataset.id;
-
         try {
             const response = await fetch(`/api/socios/${socioId}`, {
                 method: 'DELETE'
             });
-
-            if (!response.ok) throw new Error(await response.text());
-
-            mostrarAlerta('Socio eliminado correctamente', 'success');
-            cargarSocios();
-
+            let resp;
+            try {
+                resp = await response.json();
+            } catch (e) {
+                mostrarAlerta('Error inesperado del servidor.', 'danger');
+                throw e;
+            }
+            if (!resp.error) {
+                mostrarAlerta('Socio eliminado correctamente', 'success');
+                cargarSocios();
+            } else {
+                let msg = extraerMensajeRaiserror(resp);
+                const msgNorm = normalizarMensaje(msg);
+                if (mensajesTriggers[msgNorm]) {
+                    mostrarAlerta(mensajesTriggers[msgNorm], 'danger');
+                } else {
+                    mostrarAlerta(msg, 'danger');
+                }
+            }
         } catch (error) {
-            console.error('Error al eliminar socio:', error);
-            mostrarAlerta('Error al eliminar socio', 'danger');
+            mostrarAlerta('Error al eliminar socio.', 'danger');
         }
-    }
-
-    // Función para mostrar alertas
-    function mostrarAlerta(mensaje, tipo) {
-        // Implementar según tu sistema de alertas preferido
-        alert(`${tipo.toUpperCase()}: ${mensaje}`);
     }
 
     // Escuchar cambios en los filtros

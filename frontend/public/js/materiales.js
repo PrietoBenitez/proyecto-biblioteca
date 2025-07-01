@@ -45,13 +45,18 @@ document.addEventListener('DOMContentLoaded', function() {
                         'R': '<span class="badge bg-warning text-dark">Regular</span>',
                         'D': '<span class="badge bg-danger">Dañado</span>'
                     }[material.condicion] || `<span class="badge bg-light text-dark">${material.condicion || ''}</span>`;
+                    const formatoDesc = {
+                        'C': 'Colección',
+                        'T': 'Texto',
+                        'P': 'Publicación'
+                    }[material.formato] || '';
                     const fila = document.createElement('tr');
                     fila.innerHTML = `
                         <td>${material.nombre}</td>
                         <td>${material.categoria_desc || ''}</td>
                         <td>${material.subtipo_desc || ''}</td>
                         <td>${material.tipo_material || ''}</td>
-                        <td>${material.formato || ''}</td>
+                        <td>${formatoDesc}</td>
                         <td>${material.ubicacion || ''}</td>
                         <td>${material.valor_estimado || ''}</td>
                         <td>${material.pais_desc || ''}</td>
@@ -123,23 +128,40 @@ document.addEventListener('DOMContentLoaded', function() {
         const materialId = document.getElementById('materialId').value;
         const url = materialId ? `/api/materiales/${materialId}` : '/api/materiales';
         const method = materialId ? 'PUT' : 'POST';
-        const materialData = {
-            NOMBRE: document.getElementById('nombre').value,
-            CATEGORIA: document.getElementById('categoria').value, // ID de categoría
-            SUBTIPO: document.getElementById('subtipo').value,     // ID de subtipo
-            TIPO_MATERIAL: document.getElementById('tipo_material').value,
-            FORMATO: document.getElementById('formato').value || null,
-            UBICACION: document.getElementById('ubicacion').value || null,
-            VALOR_ESTIMADO: document.getElementById('valor_estimado').value || null,
-            PAIS_ORIGEN: document.getElementById('pais_origen').value, // ID de país
-            DESCRIPCION: document.getElementById('descripcion').value || null,
-            ESTADO: document.getElementById('estado') ? document.getElementById('estado').value : null,
-            ES_RESTRINGIDO: document.getElementById('es_restringido').value || 0,
-            DONADO: document.getElementById('donado').value || 0,
-            NOMBRE_DONANTE: document.getElementById('nombre_donante').value, // ID de donante
+        // Convierte IDs a número o null
+        const subtipo_id = parseInt(document.getElementById('subtipo').value) || null;
+        const nacionalidad = parseInt(document.getElementById('pais_origen').value) || null;
+        let donante_id = document.getElementById('nombre_donante').value;
+        donante_id = donante_id && !isNaN(donante_id) ? Number(donante_id) : null;
+        // Validación básica de campos obligatorios
+        if (!document.getElementById('nombre').value.trim() || !subtipo_id || !document.getElementById('tipo_material').value.trim()) {
+            mostrarAlerta('Complete todos los campos obligatorios (*)', 'danger');
+            return;
+        }
+        // Construcción del objeto materialData con tipos correctos y exclusión de vacíos
+        const materialDataRaw = {
+            NOMBRE: document.getElementById('nombre').value.trim(),
+            SUBTIPO_ID: subtipo_id,
+            NACIONALIDAD: nacionalidad,
+            DONANTE_ID: donante_id,
+            FORMATO: document.getElementById('formato').value.trim() || null,
+            UBICACION: document.getElementById('ubicacion').value.trim() || null,
+            VALOR_GS: document.getElementById('valor_estimado').value ? Number(document.getElementById('valor_estimado').value) : null,
+            TIPO_MATERIAL: document.getElementById('tipo_material').value.trim(),
+            CONDICION: document.getElementById('condicion').value || 'B',
+            DESCRIPCION: document.getElementById('descripcion').value.trim() || null,
+            DISPONIBILIDAD: document.getElementById('estado') ? document.getElementById('estado').value : null,
+            RESTRINGIDO: document.getElementById('es_restringido').value || 'N',
+            DONADO: document.getElementById('donado').value || 'N',
             FECHA_DONACION: document.getElementById('fecha_donacion').value || null,
-            ESTADO_AL_DONAR: document.getElementById('estado_al_donar').value || null
+            ESTADO_DONACION: document.getElementById('estado_al_donar').value.trim() || null
         };
+        // Excluir campos vacíos, nulos o NaN
+        const materialData = {};
+        for (const [key, value] of Object.entries(materialDataRaw)) {
+            if (value === undefined || value === null || value === '' || (typeof value === 'number' && isNaN(value))) continue;
+            materialData[key] = value;
+        }
         try {
             const response = await fetch(url, {
                 method: method,
@@ -225,29 +247,16 @@ document.addEventListener('DOMContentLoaded', function() {
             await cargarOpcionesSelectsMateriales(); // Esperar a que los selects estén llenos
 
             document.getElementById('materialId').value = material.id;
-            document.getElementById('nombre').value = material.nombre;
+            document.getElementById('nombre').value = material.nombre || '';
 
-            // Selección robusta de selects por ID (como en socios)
-            // Primero setear subtipo, luego categoría (la categoría depende del subtipo)
+            // Setear subtipo y categoría por ID
             const subtipoSelect = document.getElementById('subtipo');
             if (subtipoSelect) {
-                subtipoSelect.value = '';
-                for (let opt of subtipoSelect.options) {
-                    if (opt.value == material.subtipo) {
-                        subtipoSelect.value = material.subtipo;
-                        break;
-                    }
-                }
+                subtipoSelect.value = material.subtipo_id || material.subtipo || '';
             }
             const categoriaSelect = document.getElementById('categoria');
             if (categoriaSelect) {
-                categoriaSelect.value = '';
-                for (let opt of categoriaSelect.options) {
-                    if (opt.value == material.categoria) {
-                        categoriaSelect.value = material.categoria;
-                        break;
-                    }
-                }
+                categoriaSelect.value = material.categoria_id || material.categoria || '';
             }
             document.getElementById('tipo_material').value = material.tipo_material || '';
             document.getElementById('formato').value = material.formato || '';
@@ -256,32 +265,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const paisSelect = document.getElementById('pais_origen');
             if (paisSelect) {
-                paisSelect.value = '';
-                for (let opt of paisSelect.options) {
-                    if (opt.value == material.pais_origen) {
-                        paisSelect.value = material.pais_origen;
-                        break;
-                    }
-                }
+                paisSelect.value = material.nacionalidad || material.pais_origen || '';
             }
             document.getElementById('descripcion').value = material.descripcion || '';
-            if(document.getElementById('estado')) document.getElementById('estado').value = material.estado || 'D';
-            if(document.getElementById('es_restringido')) document.getElementById('es_restringido').value = material.es_restringido || 'N';
+            if(document.getElementById('estado')) document.getElementById('estado').value = material.disponibilidad || material.estado || 'D';
+            if(document.getElementById('es_restringido')) document.getElementById('es_restringido').value = material.restringido || material.es_restringido || 'N';
             if(document.getElementById('donado')) document.getElementById('donado').value = material.donado || 'N';
 
-            // Donante: buscar por ID, no por nombre
+            // Donante por ID, null si no hay
             const donanteSelect = document.getElementById('nombre_donante');
             if (donanteSelect) {
-                donanteSelect.value = '';
-                for (let opt of donanteSelect.options) {
-                    if (opt.value == material.nombre_donante) {
-                        donanteSelect.value = material.nombre_donante;
-                        break;
-                    }
-                }
+                let donanteValue = material.donante_id || material.nombre_donante || '';
+                donanteSelect.value = donanteValue && !isNaN(donanteValue) ? donanteValue : '';
             }
             document.getElementById('fecha_donacion').value = material.fecha_donacion ? material.fecha_donacion.split('T')[0] : '';
-            document.getElementById('estado_al_donar').value = material.estado_al_donar || '';
+            document.getElementById('estado_al_donar').value = material.estado_donacion || material.estado_al_donar || '';
             document.getElementById('condicion').value = material.condicion || 'B';
             document.getElementById('modalTitulo').textContent = 'Editar Material';
             modalMaterial.show();
@@ -313,8 +311,19 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
-    function mostrarAlerta(mensaje, tipo) {
-        alert(`${tipo.toUpperCase()}: ${mensaje}`);
+    function mostrarAlerta(mensaje, tipo = 'success') {
+        let alert = document.getElementById('alert-exito');
+        if (!alert) {
+            alert = document.createElement('div');
+            alert.id = 'alert-exito';
+            alert.className = 'alert position-fixed top-0 start-50 translate-middle-x mt-3 shadow';
+            alert.style.zIndex = 2000;
+            document.body.appendChild(alert);
+        }
+        alert.className = `alert alert-${tipo === 'danger' ? 'danger' : 'success'} position-fixed top-0 start-50 translate-middle-x mt-3 shadow`;
+        alert.textContent = mensaje;
+        alert.style.display = 'block';
+        setTimeout(() => { alert.style.display = 'none'; }, 2500);
     }
 
     // async function cargarEstadosUnicos() {

@@ -29,6 +29,11 @@ async function getMaterialById(id) {
     return Array.isArray(result.rows) ? result.rows[0] : result[0];
 }
 
+// Utilidad para convertir string vacío a null
+function toNull(v) {
+    return v === '' ? null : v;
+}
+
 async function createMaterial(data) {
     const db = await getConnection();
     const insertQuery = `
@@ -37,21 +42,21 @@ async function createMaterial(data) {
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const values = [
-        data.SUBTIPO || null,
-        data.PAIS_ORIGEN || null,
-        data.NOMBRE_DONANTE || null,
+        toNull(data.SUBTIPO_ID) || null,
+        toNull(data.NACIONALIDAD) || null,
+        toNull(data.DONANTE_ID) || null,
         data.NOMBRE,
-        data.FORMATO || null,
-        data.UBICACION || null,
-        data.VALOR_ESTIMADO || null,
-        data.TIPO_MATERIAL || null,
-        data.CONDICION || 'B',
-        data.DESCRIPCION || null,
-        data.ESTADO || 'D',
-        data.ES_RESTRINGIDO || 'N',
-        data.DONADO || 'N',
-        data.FECHA_DONACION || null,
-        data.ESTADO_AL_DONAR || null
+        toNull(data.FORMATO) || null,
+        toNull(data.UBICACION) || null,
+        toNull(data.VALOR_GS) || null,
+        toNull(data.TIPO_MATERIAL) || null,
+        toNull(data.CONDICION) || 'B',
+        toNull(data.DESCRIPCION) || null,
+        toNull(data.DISPONIBILIDAD) || 'D',
+        toNull(data.RESTRINGIDO) || 'N',
+        toNull(data.DONADO) || 'N',
+        toNull(data.FECHA_DONACION) || null,
+        toNull(data.ESTADO_DONACION) || null
     ];
     const result = await db.query(insertQuery, values);
     await db.close();
@@ -80,21 +85,21 @@ async function updateMaterial(id, data) {
         WHERE NUMERO_ID = ?
     `;
     const values = [
-        data.SUBTIPO || null,
-        data.PAIS_ORIGEN || null,
-        data.NOMBRE_DONANTE || null,
+        toNull(data.SUBTIPO_ID) || null,
+        toNull(data.NACIONALIDAD) || null,
+        toNull(data.DONANTE_ID) || null,
         data.NOMBRE,
-        data.FORMATO || null,
-        data.UBICACION || null,
-        data.VALOR_ESTIMADO || null,
-        data.TIPO_MATERIAL || null,
-        data.CONDICION || 'B',
-        data.DESCRIPCION || null,
-        data.ESTADO || 'D',
-        data.ES_RESTRINGIDO || 'N',
-        data.DONADO || 'N',
-        data.FECHA_DONACION || null,
-        data.ESTADO_AL_DONAR || null,
+        toNull(data.FORMATO) || null,
+        toNull(data.UBICACION) || null,
+        toNull(data.VALOR_GS) || null,
+        toNull(data.TIPO_MATERIAL) || null,
+        toNull(data.CONDICION) || 'B',
+        toNull(data.DESCRIPCION) || null,
+        toNull(data.DISPONIBILIDAD) || 'D',
+        toNull(data.RESTRINGIDO) || 'N',
+        toNull(data.DONADO) || 'N',
+        toNull(data.FECHA_DONACION) || null,
+        toNull(data.ESTADO_DONACION) || null,
         id
     ];
     const result = await db.query(updateQuery, values);

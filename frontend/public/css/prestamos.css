@@ -106,12 +106,22 @@ body {
     color: var(--primary-color);
 }
 
+/* --- ESTILO PRINCIPAL PRESTAMOS IGUAL A MATERIALES --- */
 .prestamos-main-container {
-    background: var(--white);
-    border-radius: 12px;
-    box-shadow: var(--shadow);
-    margin-top: 2rem;
-    padding: 2rem 2rem 1.5rem 2rem;
+    background-color: var(--white);
+    color: var(--text-color);
+    border-radius: 18px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.13);
+    border: 1.5px solid #e0e0e0;
+    max-width: 98vw;
+    margin-top: 2.5rem;
+    padding: 2.5rem 2rem 2rem 2rem;
+    transition: none;
+}
+.prestamos-main-container:focus-within,
+.prestamos-main-container:hover {
+    box-shadow: 0 4px 24px rgba(0,0,0,0.13);
+    border-color: #e0e0e0;
 }
 
 .table {
@@ -120,11 +130,9 @@ body {
     box-shadow: var(--shadow);
     margin-bottom: 0;
 }
-
 .table thead {
     background: var(--light-color);
 }
-
 .table th, .table td {
     vertical-align: middle;
     text-align: center;
@@ -221,8 +229,13 @@ body[data-theme="dark"] .prestamos-main-container .btn-danger svg {
     color: #dc3545 !important;
 }
 
-/* --- DARK MODE PRESTAMOS SIMILAR A MATERIALES --- */
-body[data-theme="dark"] .prestamos-main-container {
+/* --- DARK MODE PROFUNDO IGUAL A MATERIALES --- */
+body[data-theme="dark"] {
+    background-color: #121212 !important;
+}
+body[data-theme="dark"] .prestamos-main-container,
+body[data-theme="dark"] main.container,
+body[data-theme="dark"] .container.py-4 {
     background-color: #181b20 !important;
     color: #fff !important;
     border-radius: 18px;
@@ -264,17 +277,88 @@ body[data-theme="dark"] .prestamos-main-container .form-select:focus {
     border-color: var(--primary-color);
 }
 body[data-theme="dark"] .prestamos-main-container .modal-content {
-    background-color: #23272f;
-    color: #fff;
-    border: 1px solid #444a57;
+    background-color: #23272f !important;
+    color: #fff !important;
+    border: 1px solid #444a57 !important;
+    box-shadow: 0 2px 24px rgba(0,0,0,0.45) !important;
 }
-body[data-theme="dark"] .prestamos-main-container table tr {
-    border-bottom: 1.5px solid #23272f !important;
+body[data-theme="dark"] .modal-dialog,
+body[data-theme="dark"] .modal-content,
+body[data-theme="dark"] .modal-header,
+body[data-theme="dark"] .modal-body,
+body[data-theme="dark"] .modal-footer {
+    background-color: #23272f !important;
+    color: #fff !important;
+    border-color: #444a57 !important;
 }
-body[data-theme="dark"] .prestamos-main-container table tr:last-child {
-    border-bottom: none !important;
+body[data-theme="dark"] .modal-content {
+    box-shadow: 0 2px 24px rgba(0,0,0,0.45) !important;
+    border-radius: 18px !important;
+}
+body[data-theme="dark"] .modal-header,
+body[data-theme="dark"] .modal-footer {
+    border-bottom: 1px solid #444a57 !important;
+    border-top: 1px solid #444a57 !important;
+}
+body[data-theme="dark"] .modal-title {
+    color: #fff !important;
+}
+body[data-theme="dark"] .btn-close {
+    filter: invert(1) grayscale(1) brightness(1.5);
+}
+body[data-theme="dark"] .modal-content .form-control,
+body[data-theme="dark"] .modal-content .form-select,
+body[data-theme="dark"] .modal-content textarea {
+    background-color: #23272f !important;
+    color: #fff !important;
+    border-color: #444a57 !important;
+}
+body[data-theme="dark"] .modal-content .form-control:focus,
+body[data-theme="dark"] .modal-content .form-select:focus {
+    background-color: #23272f !important;
+    color: #fff !important;
+    border-color: var(--primary-color) !important;
+}
+body[data-theme="dark"] .modal-content input::placeholder,
+body[data-theme="dark"] .modal-content textarea::placeholder {
+    color: #b0b0b0 !important;
+    opacity: 1 !important;
 }
 
+body[data-theme="dark"] .navbar-custom {
+    background-color: #23272f !important;
+    color: #fff !important;
+    box-shadow: 0 2px 24px rgba(0,0,0,0.45);
+}
+body[data-theme="dark"] .navbar-nav .nav-link,
+body[data-theme="dark"] .navbar-brand,
+body[data-theme="dark"] .brand-text,
+body[data-theme="dark"] .user-section {
+    color: #fff !important;
+}
+body[data-theme="dark"] .navbar-nav .nav-link.active,
+body[data-theme="dark"] .navbar-nav .nav-link:hover {
+    color: var(--primary-color) !important;
+}
+body[data-theme="dark"] .brand-logo {
+    background-color: var(--primary-color) !important;
+    color: #fff !important;
+}
+body[data-theme="dark"] #inputFiltroTexto {
+    background-color: #23272f !important;
+    color: #fff !important;
+    border-color: #444a57 !important;
+}
+body[data-theme="dark"] #inputFiltroTexto::placeholder {
+    color: #b0b0b0 !important;
+    opacity: 1 !important;
+}
+
+@media (max-width: 992px) {
+    .prestamos-main-container {
+        padding: 1.5rem 0.5rem;
+    }
+}
 @media (max-width: 768px) {
     .prestamos-main-container {
         padding: 1rem 0.5rem;

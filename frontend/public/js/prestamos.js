@@ -5,6 +5,10 @@ document.addEventListener('DOMContentLoaded', () => {
     cargarSocios();
     cargarMateriales();
     cargarBibliotecarios();
+    // Filtros
+    document.getElementById('inputFiltroTexto').addEventListener('input', filtrarPrestamos);
+    document.getElementById('inputFiltroEstado').addEventListener('change', filtrarPrestamos);
+    document.getElementById('inputFiltroDevolucion').addEventListener('change', filtrarPrestamos);
     
     const form = document.getElementById('prestamo-form');
     const cancelarBtn = document.getElementById('cancelar-btn');
@@ -12,16 +16,27 @@ document.addEventListener('DOMContentLoaded', () => {
     cancelarBtn.addEventListener('click', resetForm);
 });
 
+let prestamosData = [];
+
 function cargarPrestamos() {
     fetch('/api/prestamos')
         .then(res => res.json())
-        .then(data => mostrarPrestamos(data))
+        .then(data => {
+            prestamosData = data;
+            mostrarPrestamos(data);
+        })
         .catch(err => console.error('Error cargando préstamos:', err));
 }
 
 function mostrarPrestamos(prestamos) {
     const tbody = document.querySelector('#prestamos-table tbody');
     tbody.innerHTML = '';
+    if (prestamos.length === 0) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td colspan="11" class="text-center text-muted">No hay registros que coincidan con los filtros seleccionados.</td>`;
+        tbody.appendChild(tr);
+        return;
+    }
     prestamos.forEach(prestamo => {
         let estadoBadge = '';
         if (prestamo.ESTADO_DEVOLUCION === 'B') {
@@ -33,14 +48,13 @@ function mostrarPrestamos(prestamos) {
         }
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td>${prestamo.PRESTAMO_ID}</td>
             <td>${prestamo.NOMBRE_SOCIO || ''} ${prestamo.APELLIDO_SOCIO || ''}</td>
             <td>${prestamo.NOMBRE_MATERIAL || ''}</td>
             <td>${prestamo.NOMBRE_BIBLIOTECARIO || ''} ${prestamo.APELLIDO_BIBLIOTECARIO || ''}</td>
             <td>${prestamo.TIPO_PRESTAMO || ''}</td>
             <td>${prestamo.FECHA_PRESTAMO ? prestamo.FECHA_PRESTAMO.split('T')[0] : ''}</td>
             <td>${prestamo.LIMITE_DEVOLUCION ? prestamo.LIMITE_DEVOLUCION.split('T')[0] : ''}</td>
-            <td>${prestamo.FECHA_DEVOLUCION ? prestamo.FECHA_DEVOLUCION.split('T')[0] : ''}</td>
+            <td>${prestamo.DEVOLUCION ? prestamo.DEVOLUCION.split('T')[0] : ''}</td>
             <td>${prestamo.COMENTARIO || ''}</td>
             <td>${prestamo.COMENTARIO_ESTADO || ''}</td>
             <td>${estadoBadge}</td>
@@ -105,33 +119,51 @@ function mostrarMensajeExito(msg) {
     setTimeout(() => { alert.style.display = 'none'; }, 2500);
 }
 
+function mostrarAlerta(mensaje, tipo = 'success') {
+    let alert = document.getElementById('alert-exito');
+    if (!alert) {
+        alert = document.createElement('div');
+        alert.id = 'alert-exito';
+        alert.className = 'alert position-fixed top-0 start-50 translate-middle-x mt-3 shadow';
+        alert.style.zIndex = 2000;
+        document.body.appendChild(alert);
+    }
+    alert.className = `alert alert-${tipo === 'danger' ? 'danger' : 'success'} position-fixed top-0 start-50 translate-middle-x mt-3 shadow`;
+    alert.textContent = mensaje;
+    alert.style.display = 'block';
+    setTimeout(() => { alert.style.display = 'none'; }, 2500);
+}
+
 function guardarPrestamo(e) {
     e.preventDefault();
     const id = document.getElementById('prestamo-id').value;
-    const socio_id = document.getElementById('socio-select').value;
-    const numero_id = document.getElementById('material-select').value;
-    const bibliotecario_id = document.getElementById('bibliotecario-select').value;
+    const socio_id = parseInt(document.getElementById('socio-select').value) || null;
+    const numero_id = parseInt(document.getElementById('material-select').value) || null;
+    const bibliotecario_id = parseInt(document.getElementById('bibliotecario-select').value) || null;
+    const tipo_prestamo = document.getElementById('tipo-prestamo').value;
     const fecha_prestamo = document.getElementById('fecha-prestamo').value;
     const fecha_devolucion = document.getElementById('fecha-devolucion').value;
+    const fecha_real_devolucion = document.getElementById('fecha-real-devolucion').value;
+    const estado_devolucion = document.getElementById('estado-devolucion').value;
     const comentario = document.getElementById('comentario').value;
-    // Si tienes un campo para tipo_prestamo, úsalo. Si no, por defecto 'I'
-    const tipo_prestamo = 'I';
-    // Los siguientes campos no están en el formulario, pero deben enviarse
-    const devolucion = null;
-    const estado_devolucion = null;
-    const comentario_estado = '';
+    const comentario_estado = document.getElementById('comentario-estado').value;
+    // Validación obligatoria para comentario
+    if (!comentario || comentario.trim() === '') {
+        mostrarAlerta('El campo Comentario es obligatorio.', 'danger');
+        return;
+    }
     const data = {
         SOCIO_ID: socio_id,
         NUMERO_ID: numero_id,
         BIBLIOTECARIO_ID: bibliotecario_id,
+        TIPO_PRESTAMO: tipo_prestamo,
         FECHA_PRESTAMO: fecha_prestamo,
         LIMITE_DEVOLUCION: fecha_devolucion,
-        COMENTARIO: comentario || '',
-        TIPO_PRESTAMO: tipo_prestamo,
-        DEVOLUCION: devolucion,
-        ESTADO_DEVOLUCION: estado_devolucion,
-        COMENTARIO_ESTADO: comentario_estado
+        COMENTARIO: comentario,
+        COMENTARIO_ESTADO: comentario_estado !== undefined && comentario_estado !== null ? comentario_estado : ''
     };
+    if (fecha_real_devolucion) data.DEVOLUCION = fecha_real_devolucion;
+    if (estado_devolucion) data.ESTADO_DEVOLUCION = estado_devolucion;
     let url = '/api/prestamos';
     let method = 'POST';
     if (id) {
@@ -143,20 +175,42 @@ function guardarPrestamo(e) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
     })
-    .then(res => res.json())
+    .then(async res => {
+        let resp;
+        try {
+            resp = await res.json();
+        } catch (e) {
+            // Si la respuesta no es JSON (por ejemplo, error HTML), muestra mensaje genérico
+            mostrarAlerta('Error inesperado del servidor.', 'danger');
+            throw e;
+        }
+        return resp;
+    })
     .then(resp => {
         if (!resp.error) {
-            mostrarMensajeExito(id ? 'Préstamo actualizado correctamente' : 'Préstamo creado correctamente');
+            mostrarAlerta(id ? 'Préstamo actualizado correctamente' : 'Préstamo creado correctamente', 'success');
             cargarPrestamos();
             resetForm();
-            // Cierra el modal si está abierto
             const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalPrestamo'));
             modal.hide();
         } else {
-            alert('Error: ' + resp.error);
+            // Extrae y normaliza el mensaje de RAISERROR
+            let msg = extraerMensajeRaiserror(resp);
+            const msgNorm = normalizarMensaje(msg);
+            if (mensajesTriggers[msgNorm]) {
+                mostrarAlerta(mensajesTriggers[msgNorm], 'danger');
+            } else {
+                mostrarAlerta(msg, 'danger');
+            }
         }
     })
-    .catch(err => alert('Error guardando préstamo: ' + err));
+    .catch(err => {
+        if (typeof err === 'string') {
+            mostrarAlerta('Error guardando préstamo: ' + err, 'danger');
+        } else {
+            mostrarAlerta('Error guardando préstamo.', 'danger');
+        }
+    });
 }
 
 function editarPrestamo(id) {
@@ -167,8 +221,33 @@ function editarPrestamo(id) {
             document.getElementById('socio-select').value = prestamo.SOCIO_ID;
             document.getElementById('material-select').value = prestamo.NUMERO_ID;
             document.getElementById('bibliotecario-select').value = prestamo.BIBLIOTECARIO_ID;
-            document.getElementById('fecha-prestamo').value = prestamo.FECHA_PRESTAMO ? prestamo.FECHA_PRESTAMO.split('T')[0] : '';
-            document.getElementById('fecha-devolucion').value = prestamo.FECHA_DEVOLUCION ? prestamo.FECHA_DEVOLUCION.split('T')[0] : '';
+            document.getElementById('tipo-prestamo').value = prestamo.TIPO_PRESTAMO || 'I';
+            let fechaPrestamo = '';
+            if (prestamo.FECHA_PRESTAMO) {
+                const d = new Date(prestamo.FECHA_PRESTAMO);
+                if (!isNaN(d)) fechaPrestamo = d.toISOString().slice(0, 10);
+            }
+            let fechaLimite = '';
+            if (prestamo.LIMITE_DEVOLUCION) {
+                // Acepta tanto formato string como Date
+                let d = new Date(prestamo.LIMITE_DEVOLUCION);
+                if (!isNaN(d)) {
+                    fechaLimite = d.toISOString().slice(0, 10);
+                } else if (typeof prestamo.LIMITE_DEVOLUCION === 'string' && prestamo.LIMITE_DEVOLUCION.length >= 10) {
+                    fechaLimite = prestamo.LIMITE_DEVOLUCION.slice(0, 10);
+                }
+            }
+            let fechaDevolucion = '';
+            if (prestamo.DEVOLUCION) {
+                const d = new Date(prestamo.DEVOLUCION);
+                if (!isNaN(d)) fechaDevolucion = d.toISOString().slice(0, 10);
+            }
+            document.getElementById('fecha-prestamo').value = fechaPrestamo;
+            document.getElementById('fecha-devolucion').value = fechaLimite;
+            document.getElementById('fecha-real-devolucion').value = fechaDevolucion;
+            document.getElementById('estado-devolucion').value = prestamo.ESTADO_DEVOLUCION || '';
+            document.getElementById('comentario').value = prestamo.COMENTARIO || '';
+            document.getElementById('comentario-estado').value = prestamo.COMENTARIO_ESTADO || '';
             document.getElementById('cancelar-btn').style.display = '';
         });
 }
@@ -176,11 +255,82 @@ function editarPrestamo(id) {
 function eliminarPrestamo(id) {
     if (!confirm('¿Está seguro de eliminar este préstamo?')) return;
     fetch(`/api/prestamos/${id}`, { method: 'DELETE' })
-        .then(() => cargarPrestamos());
+        .then(res => {
+            if (!res.ok) throw new Error('Error al eliminar préstamo');
+            mostrarMensajeExito('Préstamo eliminado correctamente');
+            cargarPrestamos();
+        })
+        .catch(() => {
+            mostrarMensajeExito('Error al eliminar préstamo');
+        });
 }
 
 function resetForm() {
     document.getElementById('prestamo-form').reset();
     document.getElementById('prestamo-id').value = '';
+    document.getElementById('comentario-estado').value = '';
     document.getElementById('cancelar-btn').style.display = 'none';
 }
+
+function filtrarPrestamos() {
+    const texto = document.getElementById('inputFiltroTexto').value.toLowerCase();
+    const tipo = document.getElementById('inputFiltroEstado').value;
+    const devolucion = document.getElementById('inputFiltroDevolucion').value.toLowerCase().replace(/\s/g, '_');
+    let filtrados = prestamosData.filter(p => {
+        let coincideTexto =
+            (p.NOMBRE_SOCIO && p.NOMBRE_SOCIO.toLowerCase().includes(texto)) ||
+            (p.APELLIDO_SOCIO && p.APELLIDO_SOCIO.toLowerCase().includes(texto)) ||
+            (p.NOMBRE_MATERIAL && p.NOMBRE_MATERIAL.toLowerCase().includes(texto));
+        if (texto && !coincideTexto) return false;
+        if (tipo && p.TIPO_PRESTAMO !== tipo) return false;
+        // Considera devuelto si DEVOLUCION tiene valor no vacío/no nulo/no undefined
+        const estaDevuelto = p.DEVOLUCION !== null && p.DEVOLUCION !== undefined && String(p.DEVOLUCION).trim() !== '';
+        if (devolucion === 'devuelto' && !estaDevuelto) return false;
+        if (devolucion === 'sin_devolver' && estaDevuelto) return false;
+        return true;
+    });
+    mostrarPrestamos(filtrados);
+}
+
+function extraerMensajeRaiserror(resp) {
+    // Busca en odbcErrors o en el mensaje plano
+    let msg = resp && resp.error ? resp.error : '';
+    if (resp && resp.odbcErrors && Array.isArray(resp.odbcErrors) && resp.odbcErrors.length > 0) {
+        const raiserror = resp.odbcErrors.find(e => e.message && e.message.includes('RAISERROR executed:'));
+        if (raiserror) {
+            let after = raiserror.message.split('RAISERROR executed:')[1];
+            let endIdx = after ? after.search(/(\\n|\n|\r|\r\n|$)/) : -1;
+            if (endIdx !== -1) {
+                msg = after.slice(0, endIdx).trim();
+            } else {
+                msg = after ? after.trim() : msg;
+            }
+        } else {
+            msg = resp.odbcErrors[0].message || msg;
+        }
+    } else if (msg && msg.includes('RAISERROR executed:')) {
+        let after = msg.split('RAISERROR executed:')[1];
+        let endIdx = after ? after.search(/(\\n|\n|\r|\r\n|$)/) : -1;
+        if (endIdx !== -1) {
+            msg = after.slice(0, endIdx).trim();
+        } else {
+            msg = after ? after.trim() : msg;
+        }
+    }
+    return msg;
+}
+
+function normalizarMensaje(s) {
+    return s ? s.replace(/\s+/g, ' ').trim().toLowerCase() : '';
+}
+
+const mensajesTriggers = {
+    'este préstamo ya fue devuelto. no se puede modificar la devolución nuevamente.': 'No puedes modificar la devolución de un préstamo ya devuelto.',
+    'el material ya está prestado y no está disponible para préstamo.': 'El material seleccionado no está disponible para préstamo.',
+    'el socio ha alcanzado el límite de préstamos permitidos para su rango/categoría.': 'Límite de préstamos alcanzado para el rango/categoría del socio.',
+    'el socio no cumple con la antigüedad mínima requerida para realizar préstamos.': 'El socio no cumple la antigüedad mínima para realizar préstamos.',
+    'este material es restringido y solo puede ser prestado a socios internos.': 'Material restringido: solo socios internos pueden solicitarlo.',
+    'no cumple con las condiciones para prestar este material restringido.': 'No cumples con las condiciones para este material restringido.',
+    'se ha aplicado una sanción por devolución tardía.': 'Atención: se aplicó una sanción por devolución tardía.',
+    'el socio ya tiene el máximo de sanciones permitidas.': 'El socio ya tiene el máximo de sanciones permitidas.'
+};

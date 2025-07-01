@@ -36,25 +36,54 @@ async function getPrestamoById(id) {
     return Array.isArray(result.rows) ? result.rows[0] : result[0];
 }
 
+// Utilidad para convertir string vacío a null
+function toNull(v) {
+    return v === '' ? null : v;
+}
+// Utilidad para formatear fecha a 'YYYY-MM-DD HH:MM:SS' si es solo 'YYYY-MM-DD'
+function toDateTimeString(v) {
+    if (!v) return null;
+    if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)) {
+        return v + ' 00:00:00';
+    }
+    return v;
+}
+// Utilidad para formatear solo fecha a 'YYYY-MM-DD'
+function toDateString(v) {
+    if (!v) return null;
+    if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v)) {
+        return v.slice(0, 10);
+    }
+    return v;
+}
+
 // Crear préstamo
 async function createPrestamo(data) {
     const db = await getConnection();
+    // Validar si ya existe un préstamo activo para el material
+    const checkQuery = `SELECT PRESTAMO_ID FROM PRESTAMOS WHERE NUMERO_ID = ? AND DEVOLUCION IS NULL`;
+    const checkResult = await db.query(checkQuery, [toNull(data.NUMERO_ID)]);
+    if (Array.isArray(checkResult.rows) ? checkResult.rows.length > 0 : checkResult.length > 0) {
+        await db.close();
+        // Retornar error específico para el controlador
+        return { error: 'El material ya tiene un préstamo activo y no puede ser prestado nuevamente hasta su devolución.' };
+    }
     const insertQuery = `
         INSERT INTO PRESTAMOS (
             SOCIO_ID, BIBLIOTECARIO_ID, NUMERO_ID, TIPO_PRESTAMO, FECHA_PRESTAMO, COMENTARIO, LIMITE_DEVOLUCION, DEVOLUCION, ESTADO_DEVOLUCION, COMENTARIO_ESTADO
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const values = [
-        data.SOCIO_ID,
-        data.BIBLIOTECARIO_ID,
-        data.NUMERO_ID, // NUMERO_ID es el ID del material
-        data.TIPO_PRESTAMO || 'I',
-        data.FECHA_PRESTAMO || null,
-        data.COMENTARIO || null,
-        data.LIMITE_DEVOLUCION || null,
-        data.DEVOLUCION || null,
-        data.ESTADO_DEVOLUCION || null,
-        data.COMENTARIO_ESTADO || null
+        toNull(data.SOCIO_ID),
+        toNull(data.BIBLIOTECARIO_ID),
+        toNull(data.NUMERO_ID), // NUMERO_ID es el ID del material
+        toNull(data.TIPO_PRESTAMO) || 'I',
+        toDateTimeString(toNull(data.FECHA_PRESTAMO)) || null,
+        toNull(data.COMENTARIO) || null,
+        toDateTimeString(toNull(data.LIMITE_DEVOLUCION)) || null,
+        toDateString(toNull(data.DEVOLUCION)) || null, // SOLO fecha para DEVOLUCION
+        toNull(data.ESTADO_DEVOLUCION) || null,
+        toNull(data.COMENTARIO_ESTADO) || null
     ];
     const result = await db.query(insertQuery, values);
     await db.close();
@@ -83,16 +112,16 @@ async function updatePrestamo(id, data) {
         WHERE PRESTAMO_ID = ?
     `;
     const values = [
-        data.SOCIO_ID,
-        data.BIBLIOTECARIO_ID,
-        data.NUMERO_ID,
-        data.TIPO_PRESTAMO || 'I',
-        data.FECHA_PRESTAMO || null,
-        data.COMENTARIO || null,
-        data.LIMITE_DEVOLUCION || null,
-        data.DEVOLUCION || null,
-        data.ESTADO_DEVOLUCION || null,
-        data.COMENTARIO_ESTADO || null,
+        toNull(data.SOCIO_ID),
+        toNull(data.BIBLIOTECARIO_ID),
+        toNull(data.NUMERO_ID),
+        toNull(data.TIPO_PRESTAMO) || 'I',
+        toDateTimeString(toNull(data.FECHA_PRESTAMO)) || null,
+        toNull(data.COMENTARIO) || null,
+        toDateTimeString(toNull(data.LIMITE_DEVOLUCION)) || null,
+        toDateString(toNull(data.DEVOLUCION)) || null, // SOLO fecha para DEVOLUCION
+        toNull(data.ESTADO_DEVOLUCION) || null,
+        toNull(data.COMENTARIO_ESTADO) || null,
         id
     ];
     const result = await db.query(updateQuery, values);

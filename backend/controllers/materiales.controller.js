@@ -55,31 +55,29 @@ exports.getMaterialById = async (req, res) => {
 // Crear un nuevo material
 exports.createMaterial = async (req, res) => {
     const material = req.body;
-    const {
-        nombre, categoria, subtipo, tipo_material, formato, ubicacion,
-        valor_estimado, pais_origen, descripcion, estado, es_restringido,
-        donado, nombre_donante, fecha_donacion, estado_al_donar,
-    } = material;
-
-    if (!nombre || !categoria || !subtipo || !tipo_material || !formato || !ubicacion || !valor_estimado || !pais_origen) {
+    if (!material.NOMBRE || !material.SUBTIPO_ID || !material.TIPO_MATERIAL) {
         return res.status(400).json({ error: 'Faltan campos obligatorios' });
     }
-
     try {
-        // Crear material
-        await materialesModel.createMaterial(material);
-        // Obtener el último material insertado (asumiendo que el NUMERO_ID es autoincremental)
-        // Puede requerir ajuste según la base de datos
-        const materiales = await materialesModel.getMaterialesFiltrados(nombre, null, 1, 1);
-        const m = materiales.materiales && materiales.materiales[0];
+        // Insertar material
+        const db = require('../models/materiales.model');
+        const insertResult = await db.createMaterial(material);
+        // Obtener el último ID insertado
+        const conn = await require('../config/db').getConnection();
+        const lastIdResult = await conn.query('SELECT MAX(NUMERO_ID) as lastId FROM MATERIALES');
+        await conn.close();
+        const lastId = lastIdResult.rows ? lastIdResult.rows[0].lastId : lastIdResult[0].lastId;
+        if (!lastId) return res.status(201).json({ message: 'Material creado, pero no se pudo obtener el registro.' });
+        // Obtener el material recién creado
+        const m = await db.getMaterialById(lastId);
         if (!m) return res.status(201).json({ message: 'Material creado, pero no se pudo obtener el registro.' });
-        // Mapear igual que en el listado, incluyendo los descriptivos
+        // Mapear igual que en el listado
         const materialMap = {
             id: m.NUMERO_ID,
             nombre: m.NOMBRE,
             subtipo: m.SUBTIPO_ID,
             subtipo_desc: m.SUBTIPO_DESC,
-            categoria: m.CATEGORIA_ID, // ID de la categoría asociada al subtipo
+            categoria: m.CATEGORIA_ID,
             categoria_desc: m.CATEGORIA_DESC,
             tipo_material: m.TIPO_MATERIAL,
             formato: m.FORMATO,

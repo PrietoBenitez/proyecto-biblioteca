@@ -30,6 +30,14 @@ body {
     padding: 0.8rem 0;
 }
 
+.navbar .container, .navbar-custom .container {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding-left: 0 !important;
+    padding-right: 0;
+}
+
 .brand-logo {
     width: 40px;
     height: 40px;
@@ -82,7 +90,7 @@ body {
     width: 16px;
     left: 3px;
     bottom: 3px;
-    background-color: white;
+    background-color: #1e1e1e;
     transition: .4s;
     border-radius: 50%;
 }
@@ -145,6 +153,19 @@ body {
     box-shadow: none;
 }
 .btn-primary:hover, .btn-primary:focus {
+    background-color: #0056b3 !important;
+    color: #fff !important;
+    border-color: #0056b3 !important;
+}
+
+/* Mantener color estático del botón en dark mode */
+body[data-theme="dark"] .btn-primary {
+    background-color: #007bff !important;
+    color: #fff !important;
+    border: 1.5px solid #007bff !important;
+}
+body[data-theme="dark"] .btn-primary:hover,
+body[data-theme="dark"] .btn-primary:focus {
     background-color: #0056b3 !important;
     color: #fff !important;
     border-color: #0056b3 !important;
@@ -222,7 +243,7 @@ body[data-theme="dark"] .prestamos-main-container .badge-danger {
 /* Iconos acción: editar azul, borrar rojo en dark mode para btn-primary y btn-danger */
 body[data-theme="dark"] .prestamos-main-container .btn-primary i,
 body[data-theme="dark"] .prestamos-main-container .btn-primary svg {
-    color: #007bff !important;
+    color: #fff !important;
 }
 body[data-theme="dark"] .prestamos-main-container .btn-danger i,
 body[data-theme="dark"] .prestamos-main-container .btn-danger svg {
@@ -230,6 +251,15 @@ body[data-theme="dark"] .prestamos-main-container .btn-danger svg {
 }
 
 /* --- DARK MODE PROFUNDO IGUAL A MATERIALES --- */
+
+
+body[data-theme="dark"] {
+    --light-color: #121212;
+    --white: #1e1e1e;
+    --text-color: #f0f0f0;
+    --text-light: #b0b0b0;
+    --secondary-color: #0a0a0a;
+}
 body[data-theme="dark"] {
     background-color: #121212 !important;
 }
@@ -326,12 +356,11 @@ body[data-theme="dark"] .modal-content textarea::placeholder {
 }
 
 body[data-theme="dark"] .navbar-custom {
-    background-color: #23272f !important;
+    background-color: #1E1E1E !important;
     color: #fff !important;
     box-shadow: 0 2px 24px rgba(0,0,0,0.45);
 }
 body[data-theme="dark"] .navbar-nav .nav-link,
-body[data-theme="dark"] .navbar-brand,
 body[data-theme="dark"] .brand-text,
 body[data-theme="dark"] .user-section {
     color: #fff !important;
@@ -340,9 +369,8 @@ body[data-theme="dark"] .navbar-nav .nav-link.active,
 body[data-theme="dark"] .navbar-nav .nav-link:hover {
     color: var(--primary-color) !important;
 }
-body[data-theme="dark"] .brand-logo {
-    background-color: var(--primary-color) !important;
-    color: #fff !important;
+body[data-theme="dark"] .brand-logo{
+    color: #1e1e1e !important;           
 }
 body[data-theme="dark"] #inputFiltroTexto {
     background-color: #23272f !important;
@@ -352,6 +380,35 @@ body[data-theme="dark"] #inputFiltroTexto {
 body[data-theme="dark"] #inputFiltroTexto::placeholder {
     color: #b0b0b0 !important;
     opacity: 1 !important;
+}
+
+.navbar-brand {
+    display: flex;
+    align-items: center;
+}
+
+.navbar-collapse {
+    flex-grow: 1 !important;
+    justify-content: flex-end !important;
+}
+
+@media (max-width: 991.98px) {
+  .navbar .container, .navbar-custom .container {
+    flex-direction: row;
+    justify-content: flex-start;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  .navbar-brand {
+    margin-right: 1rem;
+  }
+}
+
+@media (min-width: 992px) {
+  .navbar .container, .navbar-custom .container {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
 }
 
 @media (max-width: 992px) {

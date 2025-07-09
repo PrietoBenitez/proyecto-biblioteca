@@ -11,7 +11,6 @@ require('dotenv').config();
 const sociosRoute = require('./backend/routes/socios.route');
 const materialesRoute = require('./backend/routes/materiales.route');
 const prestamosRoute = require('./backend/routes/prestamos.route');
-const devolucionesRoute = require('./backend/routes/devoluciones.route');
 const bibliotecariosRoute = require('./backend/routes/bibliotecarios.route');
 const donantesRoute = require('./backend/routes/donantes.route');
 
@@ -30,7 +29,6 @@ app.use(express.static(path.join(__dirname, '/frontend/public')));
 app.use('/api/socios', sociosRoute);
 app.use('/api/materiales', materialesRoute);
 app.use('/api/prestamos', prestamosRoute);
-app.use('/api/devoluciones', devolucionesRoute);
 app.use('/api/bibliotecarios', bibliotecariosRoute);
 app.use('/api/donantes', donantesRoute);
 

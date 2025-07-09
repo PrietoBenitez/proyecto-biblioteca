@@ -14,6 +14,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const cancelarBtn = document.getElementById('cancelar-btn');
     form.addEventListener('submit', guardarPrestamo);
     cancelarBtn.addEventListener('click', resetForm);
+
+    // --- Apertura automática del modal si la URL contiene ?modal=nuevo ---
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('modal') === 'nuevo') {
+        setTimeout(() => {
+            const modal = new bootstrap.Modal(document.getElementById('modalPrestamo'));
+            resetForm(); // Limpia el formulario antes de mostrar
+            modal.show();
+        }, 300);
+    }
 });
 
 let prestamosData = [];

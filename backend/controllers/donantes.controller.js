@@ -41,6 +41,10 @@ exports.getDonanteById = async (req, res) => {
 // Crear un nuevo donante
 exports.createDonante = async (req, res) => {
     try {
+        const { nombre, apellido, cedula } = req.body;
+        if (!nombre || !apellido || !cedula) {
+            return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+        }
         console.log('POST /api/donantes body:', req.body);
         const nuevoDonante = await donantesModel.createDonante(req.body);
         console.log('Insert result:', nuevoDonante);
@@ -58,7 +62,7 @@ exports.createDonante = async (req, res) => {
         });
     } catch (error) {
         console.error('Error creando donante:', error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: error.message, odbcErrors: error.odbcErrors || null });
     }
 };
 
@@ -75,7 +79,11 @@ exports.updateDonante = async (req, res) => {
         res.json({ message: 'Donante actualizado correctamente' });
     } catch (error) {
         console.error('Error actualizando donante:', error);
-        res.status(500).json({ error: error.message });
+        // Enviar todos los detalles del error al frontend
+        res.status(500).json({
+            error: error.message,
+            odbcErrors: error.odbcErrors || null
+        });
     }
 };
 
@@ -92,7 +100,11 @@ exports.deleteDonante = async (req, res) => {
         res.json({ message: 'Donante eliminado correctamente' });
     } catch (error) {
         console.error('Error eliminando donante:', error);
-        res.status(500).json({ error: error.message });
+        // Enviar todos los detalles del error al frontend
+        res.status(500).json({
+            error: error.message,
+            odbcErrors: error.odbcErrors || null
+        });
     }
 };
 

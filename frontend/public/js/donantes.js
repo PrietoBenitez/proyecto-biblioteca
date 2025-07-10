@@ -65,11 +65,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 try {
                     const response = await fetch(`/api/donantes/${id}`, { method: 'DELETE' });
                     const data = await response.json();
-                    if (!response.ok) throw new Error(data.error || data.message || 'Error al eliminar');
+                    if (!response.ok) throw data; // Lanzar el objeto completo para conservar odbcErrors
                     mostrarAlerta(data.message || 'Donante eliminado', 'success');
                     cargarDonantes();
                 } catch (err) {
-                    mostrarAlerta(err.message, 'danger');
+                    const msg = String(err.message || '');
+                    // Revisar si hay errores ODBC y si el código es 23000 (violación de integridad referencial)
+                    if (
+                        (err.odbcErrors && Array.isArray(err.odbcErrors) && err.odbcErrors.some(e => e.state === '23000')) ||
+                        msg.includes("Primary key for row in table 'DONANTES' is referenced by foreign key") ||
+                        msg.includes('referenced by foreign key') ||
+                        (msg.includes('Error executing the sql statement') && msg.includes('23000'))
+                    ) {
+                        mostrarAlerta('No se pudo eliminar el donante porque tiene materiales asociados.', 'danger');
+                    } else {
+                        mostrarAlerta(msg, 'danger');
+                    }
                 }
             }
         }

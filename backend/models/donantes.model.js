@@ -5,7 +5,7 @@ function normalizarDonante(donante) {
   return {
     NOMBRE: donante.NOMBRE || donante.nombre || '',
     APELLIDO: donante.APELLIDO || donante.apellido || '',
-    CEDULA: donante.CEDULA || donante.cedula || ''
+    CEDULA: donante.CEDULA ? String(donante.CEDULA) : (donante.cedula ? String(donante.cedula) : '')
   };
 }
 
@@ -26,12 +26,14 @@ async function getDonanteById(id) {
 async function createDonante(donante) {
   const connection = await getConnection();
   const d = normalizarDonante(donante);
-  const result = await connection.query(
+  await connection.query(
     'INSERT INTO DONANTES (NOMBRE, APELLIDO, CEDULA) VALUES (?, ?, ?)',
     [d.NOMBRE, d.APELLIDO, d.CEDULA]
   );
+  // Obtener el último ID insertado
+  const idResult = await connection.query('SELECT @@IDENTITY AS id');
   await connection.close();
-  return result;
+  return { insertId: idResult[0].id };
 }
 
 async function updateDonante(id, donante) {

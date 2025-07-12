@@ -4,6 +4,9 @@ const materialesModel = require('../models/materiales.model');
 const prestamosModel = require('../models/prestamos.model');
 const donantesModel = require('../models/donantes.model');
 
+
+// Controlador de dashboard para obtener conteos de entidades
+
 exports.getDashboardCounts = async (req, res) => {
     try {
         // Socios activos (puedes ajustar la condición según tu modelo de datos)

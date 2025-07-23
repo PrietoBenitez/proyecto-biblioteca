@@ -16,6 +16,13 @@
             localStorage.removeItem('token');
             window.location.href = '/';
         }
+        // Mostrar usuario en navbar si existe
+        if (payload.usuario) {
+            const userSpan = document.getElementById('navbar-usuario');
+            if (userSpan) {
+                userSpan.textContent = payload.usuario;
+            }
+        }
     } catch (e) {
         // Si el token está corrupto, solo redirigir
         localStorage.removeItem('token');

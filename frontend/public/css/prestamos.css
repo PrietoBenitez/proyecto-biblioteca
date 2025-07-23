@@ -1,3 +1,7 @@
+/* Justificar columnas de la tabla de préstamos */
+#prestamos-table th, #prestamos-table td {
+    text-align: left;
+}
 /* Basado en materiales.css y socios.css para mantener coherencia visual */
 :root {
     --primary-color: #3498db;

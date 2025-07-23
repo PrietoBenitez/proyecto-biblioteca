@@ -16,6 +16,7 @@ const donantesRoute = require('./backend/routes/donantes.route');
 const institucionesRoute = require('./backend/routes/instituciones.route');
 const dashboardRoute = require('./backend/routes/dashboard.route');
 const authRoute = require('./backend/routes/auth.route');
+const estadisticasRoute = require('./backend/routes/estadisticas.route');
 const authMiddleware = require('./backend/middleware/auth.middleware');
 
 
@@ -38,6 +39,7 @@ app.use('/api/donantes', donantesRoute);
 app.use('/api/instituciones', institucionesRoute);
 app.use('/api/dashboard', dashboardRoute);
 app.use('/api/auth', authRoute);
+app.use('/api/estadisticas', estadisticasRoute);
 
 // Ruta inicial: redirigir a login si no está autenticado
 app.get('/', (req, res) => {
@@ -62,6 +64,9 @@ app.get('/donantes', (req, res) => {
 });
 app.get('/instituciones', (req, res) => {
     res.sendFile(path.join(__dirname, 'frontend/views/instituciones.html'));
+});
+app.get('/estadisticas', (req, res) => {
+    res.sendFile(path.join(__dirname, 'frontend/views/estadisticas.html'));
 });
 
 // Iniciar servidor

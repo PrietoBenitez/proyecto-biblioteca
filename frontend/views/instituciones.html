@@ -22,28 +22,36 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarContent">
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="/"> <i class="fas fa-home"></i> Inicio</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/"><i class="fas fa-home"></i> Inicio</a></li>
                     <li class="nav-item"><a class="nav-link" href="/socios"><i class="fas fa-users"></i> Socios</a></li>
                     <li class="nav-item"><a class="nav-link" href="/materiales"><i class="fas fa-book"></i> Materiales</a></li>
                     <li class="nav-item"><a class="nav-link" href="/prestamos"><i class="fas fa-exchange-alt"></i> Préstamos</a></li>
                     <li class="nav-item"><a class="nav-link" href="/donantes"><i class="fas fa-hand-holding-heart"></i> Donantes</a></li>
                     <li class="nav-item"><a class="nav-link active" href="/instituciones"><i class="fas fa-university"></i> Instituciones</a></li>
                 </ul>
-                <div class="d-flex align-items-center ms-3">
-                    <div class="theme-switch me-3">
+                <div class="d-flex align-items-center ms-3 gap-3">
+                    <div class="theme-switch">
                         <label class="switch">
                             <input type="checkbox" id="theme-toggle">
                             <span class="slider round"></span>
                         </label>
                     </div>
-                    <div class="user-section">
+                    <div class="user-section d-flex align-items-center gap-2">
                         <i class="fas fa-user-circle"></i>
                         <span>Admin</span>
+                        <button id="logoutBtn"
+                            class="btn btn-primary btn-sm rounded-pill d-flex align-items-center px-3"
+                            title="Cerrar sesión"
+                            aria-label="Cerrar sesión">
+                            <i class="fas fa-sign-out-alt me-2"></i>
+                            <span class="d-none d-md-inline">Salir</span>
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </nav>
+
     <main class="container py-4 donantes-main-container">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2 class="mb-0"><i class="fas fa-university me-2"></i>Gestión de Instituciones</h2>
@@ -51,12 +59,14 @@
                 <i class="fas fa-plus me-2"></i>Nueva Institución
             </button>
         </div>
+
         <!-- Filtros -->
         <div class="row mb-3">
             <div class="col-md-4 mb-2 mb-md-0">
                 <input type="text" class="form-control" id="inputFiltroTexto" placeholder="Buscar institución...">
             </div>
         </div>
+
         <!-- Tabla de instituciones -->
         <div class="table-responsive">
             <table class="table table-hover align-middle w-100" id="tablaInstituciones" style="min-width:unset;">
@@ -73,6 +83,7 @@
                 </tbody>
             </table>
         </div>
+
         <!-- Paginación -->
         <nav aria-label="Page navigation">
             <ul class="pagination justify-content-center mt-3" id="paginacion">
@@ -80,6 +91,7 @@
             </ul>
         </nav>
     </main>
+
     <!-- Modal para agregar/editar institución -->
     <div class="modal fade" id="modalInstitucion" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg">
@@ -106,9 +118,12 @@
             </div>
         </div>
     </div>
+
     <div id="alertasInstituciones" style="position: fixed; top: 80px; right: 30px; z-index: 9999;"></div>
+
     <script src="/js/instituciones.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/js/theme.js"></script>
+    <script src="/js/logout.js"></script>
 </body>
 </html>

@@ -1,4 +1,12 @@
-// frontend/public/js/prestamos.js
+// Formatea fecha a DD/MM/AAAA
+function formatearFechaDMY(fechaStr) {
+    const fecha = new Date(fechaStr);
+    const dia = String(fecha.getDate()).padStart(2, '0');
+    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+    const anio = fecha.getFullYear();
+    return `${dia}/${mes}/${anio}`;
+}
+
 
 document.addEventListener('DOMContentLoaded', () => {
     cargarPrestamos();
@@ -15,16 +23,32 @@ document.addEventListener('DOMContentLoaded', () => {
     form.addEventListener('submit', guardarPrestamo);
     cancelarBtn.addEventListener('click', resetForm);
 
+    // Oculta el campo fecha-real-devolucion al iniciar
+    const grupoFechaRealDevolucion = document.getElementById('grupo-fecha-real-devolucion');
+    if (grupoFechaRealDevolucion) grupoFechaRealDevolucion.style.display = 'none';
+
     // --- Apertura automática del modal si la URL contiene ?modal=nuevo ---
     const params = new URLSearchParams(window.location.search);
     if (params.get('modal') === 'nuevo') {
         setTimeout(() => {
             const modal = new bootstrap.Modal(document.getElementById('modalPrestamo'));
             resetForm(); // Limpia el formulario antes de mostrar
+            const grupoFechaRealDevolucion = document.getElementById('grupo-fecha-real-devolucion');
+            if (grupoFechaRealDevolucion) grupoFechaRealDevolucion.style.display = 'none';
             modal.show();
         }, 300);
     }
 });
+
+// Botón "Nuevo Préstamo"
+const nuevoBtn = document.querySelector('button[data-bs-toggle="modal"][data-bs-target="#modalPrestamo"]');
+if (nuevoBtn) {
+    nuevoBtn.addEventListener('click', () => {
+        resetForm();
+        const grupoFechaRealDevolucion = document.getElementById('grupo-fecha-real-devolucion');
+        if (grupoFechaRealDevolucion) grupoFechaRealDevolucion.style.display = 'none';
+    });
+}
 
 let prestamosData = [];
 
@@ -62,9 +86,9 @@ function mostrarPrestamos(prestamos) {
             <td>${prestamo.NOMBRE_MATERIAL || ''}</td>
             <td>${prestamo.NOMBRE_BIBLIOTECARIO || ''} ${prestamo.APELLIDO_BIBLIOTECARIO || ''}</td>
             <td>${prestamo.TIPO_PRESTAMO || ''}</td>
-            <td>${prestamo.FECHA_PRESTAMO ? prestamo.FECHA_PRESTAMO.split('T')[0] : ''}</td>
-            <td>${prestamo.LIMITE_DEVOLUCION ? prestamo.LIMITE_DEVOLUCION.split('T')[0] : ''}</td>
-            <td>${prestamo.DEVOLUCION ? prestamo.DEVOLUCION.split('T')[0] : ''}</td>
+            <td>${prestamo.FECHA_PRESTAMO ? formatearFechaDMY(prestamo.FECHA_PRESTAMO) : ''}</td>
+            <td>${prestamo.LIMITE_DEVOLUCION ? formatearFechaDMY(prestamo.LIMITE_DEVOLUCION) : ''}</td>
+            <td>${prestamo.DEVOLUCION ? formatearFechaDMY(prestamo.DEVOLUCION) : ''}</td>
             <td>${prestamo.COMENTARIO || ''}</td>
             <td>${prestamo.COMENTARIO_ESTADO || ''}</td>
             <td>${estadoBadge}</td>
@@ -260,6 +284,8 @@ function editarPrestamo(id) {
             document.getElementById('comentario-estado').value = prestamo.COMENTARIO_ESTADO || '';
             document.getElementById('cancelar-btn').style.display = '';
         });
+        const grupoFechaRealDevolucion = document.getElementById('grupo-fecha-real-devolucion');
+        if (grupoFechaRealDevolucion) grupoFechaRealDevolucion.style.display = '';
 }
 
 function eliminarPrestamo(id) {
@@ -280,6 +306,9 @@ function resetForm() {
     document.getElementById('prestamo-id').value = '';
     document.getElementById('comentario-estado').value = '';
     document.getElementById('cancelar-btn').style.display = 'none';
+
+    const grupoFechaRealDevolucion = document.getElementById('grupo-fecha-real-devolucion');
+    if (grupoFechaRealDevolucion) grupoFechaRealDevolucion.style.display = 'none';
 }
 
 function filtrarPrestamos() {

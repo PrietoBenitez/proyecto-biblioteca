@@ -1,3 +1,13 @@
+// Formatea fecha a DD/MM/AAAA
+function formatearFechaDMY(fechaStr) {
+    const fecha = new Date(fechaStr);
+    const dia = String(fecha.getDate()).padStart(2, '0');
+    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+    const anio = fecha.getFullYear();
+    return `${dia}/${mes}/${anio}`;
+}
+
+
 document.addEventListener('DOMContentLoaded', function() {
     const tablaMateriales = document.getElementById('tablaMateriales');
     const formMaterial = document.getElementById('formMaterial');
@@ -65,7 +75,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <td>${material.es_restringido === 'S' ? 'Sí' : 'No'}</td>
                         <td>${material.donado === 'S' ? 'Sí' : 'No'}</td>
                         <td>${(material.donante_nombre || '') + (material.donante_apellido ? ' ' + material.donante_apellido : '')}</td>
-                        <td>${material.fecha_donacion ? material.fecha_donacion.split('T')[0] : ''}</td>
+                        <td>${material.fecha_donacion ? formatearFechaDMY(material.fecha_donacion) : ''}</td>
                         <td>${material.estado_al_donar || ''}</td>
                         <td>${condicionBadge}</td>
                         <td>

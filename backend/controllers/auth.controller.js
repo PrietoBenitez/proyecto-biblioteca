@@ -6,23 +6,40 @@ const Bibliotecario = require('../models/bibliotecarios.model');
 
 exports.login = async (req, res) => {
     const { usuario, password } = req.body;
+
     try {
-        // Permitir acceso directo con usuario de base de datos (dba/sql)
+        // Acceso especial para DBA
         if (usuario === 'dba' && password === 'sql') {
             const token = jwt.sign({ id: 0, usuario: 'dba', rol: 'admin' }, process.env.JWT_SECRET || 'secreto', { expiresIn: '2h' });
             return res.json({ token });
         }
+
         const bibliotecario = await Bibliotecario.findByUsuario(usuario);
+        console.log('Bibliotecario encontrado:', bibliotecario); 
+
         if (!bibliotecario) {
             return res.status(401).json({ message: 'Usuario o contraseña incorrectos' });
         }
-        const valid = await bcrypt.compare(password, bibliotecario.password);
+
+        const valid = await bcrypt.compare(password, bibliotecario.CONTRASENA);
         if (!valid) {
             return res.status(401).json({ message: 'Usuario o contraseña incorrectos' });
         }
-        const token = jwt.sign({ id: bibliotecario.id, usuario: bibliotecario.usuario, rol: bibliotecario.rol }, process.env.JWT_SECRET || 'secreto', { expiresIn: '2h' });
+
+        const token = jwt.sign(
+            {
+                id: bibliotecario.id,
+                usuario: bibliotecario.USUARIO,
+                rol: bibliotecario.privilegios
+            },
+            process.env.JWT_SECRET || 'secreto',
+            { expiresIn: '2h' }
+        );
+
         res.json({ token });
+
     } catch (err) {
+        console.error('Error en login:', err); 
         res.status(500).json({ message: 'Error en el servidor' });
     }
 };

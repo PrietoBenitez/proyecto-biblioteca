@@ -124,10 +124,13 @@ body {
 
 .action-buttons .btn {
     padding: 0.6rem 1.2rem;
-    font-weight: 500;
+    font-weight: 600;
     margin-right: 1rem;
     margin-bottom: 0.5rem;
+    letter-spacing: 0.5px;
+    text-transform: capitalize;
 }
+
 
 .action-buttons .btn i {
     margin-right: 8px;
@@ -400,6 +403,11 @@ body[data-theme="dark"] .table-light {
     color: var(--text-color) !important;
 }
 
+.action-buttons .btn:hover {
+    transform: translateY(-2px);
+    transition: var(--transition);
+}
+
 
 /* Responsive */
 @media (max-width: 992px) {
@@ -419,19 +427,3 @@ body[data-theme="dark"] .table-light {
     
 }
 
-@media (max-width: 768px) {
-    .welcome-text h1 {
-        font-size: 2rem;
-    }
-    
-    .footer-content {
-        flex-direction: column;
-        text-align: center;
-        gap: 1rem;
-    }
-    
-    .footer-links {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-}

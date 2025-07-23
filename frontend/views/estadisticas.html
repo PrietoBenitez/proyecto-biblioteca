@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estadísticas</title>
+    <link rel="stylesheet" href="/css/estadisticas.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body style="background: #f6f8fa;">
+    <nav class="navbar navbar-expand-lg navbar-custom">
+        <div class="container">
+            <a class="navbar-brand" href="/index">
+                <div class="brand-logo">
+                    <i class="fas fa-book-open"></i>
+                </div>
+                <span class="brand-text">Gest<span>Lib</span></span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/index">
+                            <i class="fas fa-home"></i> Inicio
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/socios">
+                            <i class="fas fa-users"></i> Socios
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/materiales">
+                            <i class="fas fa-book"></i> Materiales
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/prestamos">
+                            <i class="fas fa-exchange-alt"></i> Préstamos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/donantes">
+                            <i class="fas fa-hand-holding-heart"></i> Donantes
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/instituciones">
+                            <i class="fas fa-university"></i> Instituciones
+                        </a>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center ms-3">
+                    <div class="theme-switch me-3">
+                        <label class="switch">
+                            <input type="checkbox" id="theme-toggle">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="user-section d-flex align-items-center gap-2">
+                        <i class="fas fa-user-circle"></i>
+                        <span>Admin</span>
+                        <button id="logoutBtn"
+                            class="btn btn-primary btn-sm rounded-pill d-flex align-items-center px-3"
+                            title="Cerrar sesión"
+                            aria-label="Cerrar sesión">
+                            <i class="fas fa-sign-out-alt me-2"></i>
+                            <span class="d-none d-md-inline">Salir</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <div class="estadisticas-card">
+        <div class="estadisticas-header">
+            <i class="fas fa-chart-bar"></i>
+            <h2 class="mb-2">Estadísticas de la Biblioteca</h2>
+            <p class="mb-0">Visualiza los totales de socios, materiales, préstamos y donantes</p>
+        </div>
+        <div class="estadisticas-body">
+            <div class="row g-4">
+                <div class="col-12 col-md-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title text-center"><i class="fas fa-chart-bar me-2"></i>Barras</h5>
+                            <canvas id="estadisticasChartBar" width="300" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title text-center"><i class="fas fa-chart-pie me-2"></i>Pastel</h5>
+                            <canvas id="estadisticasChartPie" width="300" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <h5 class="card-title text-center"><i class="fas fa-chart-line me-2"></i>Línea</h5>
+                            <canvas id="estadisticasChartLine" width="300" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="/js/estadisticas.js"></script>
+    <script src="js/index.js"></script>
+    <script src="js/logout.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/theme.js"></script>
+    <script src="js/auth-check.js"></script>
+
+
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeToggle = document.getElementById('theme-toggle');
+            const body = document.body;
+            // Si el usuario ya tiene dark mode, aplica
+            if (localStorage.getItem('theme') === 'dark') {
+                body.classList.add('dark-mode');
+                themeToggle.checked = true;
+            }
+            themeToggle.addEventListener('change', function() {
+                if (themeToggle.checked) {
+                    body.classList.add('dark-mode');
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    body.classList.remove('dark-mode');
+                    localStorage.setItem('theme', 'light');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

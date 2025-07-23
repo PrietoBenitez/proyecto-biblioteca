@@ -386,6 +386,51 @@ body[data-theme="dark"] .pagination .page-item.active .page-link {
     border-color: #18609c;
 }
 
+.btn-logout-compact {
+    padding: 0.6rem 1.2rem;
+    font-weight: 600;
+    font-size: 1rem;
+    letter-spacing: 0.5px;
+    text-transform: capitalize;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: #3498db;
+    color: #fff;
+    border: 1.5px solid #3498db;
+    border-radius: 0.25rem;
+    transition: var(--transition);
+}
+.btn-logout-compact:hover {
+    background-color: #2176bd;
+    border-color: #2176bd;
+    color: #fff;
+}
+
+/* Estilo específico para el botón de salir */
+#logoutBtn {
+    font-size: 0.95rem;
+    padding: 0.4rem 1rem;
+    border-radius: 50px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    transition: var(--transition);
+}
+#logoutBtn i {
+    font-size: 1rem;
+}
+
+
+body[data-theme="dark"] .btn-logout-compact {
+    background-color: #2176bd !important;
+    border-color: #2176bd !important;
+    color: #fff !important;
+}
+body[data-theme="dark"] .btn-logout-compact:hover {
+    background-color: #18609c !important;
+    border-color: #18609c !important;
+}
+
+
 /* Mantener color estático del botón en dark mode */
 body[data-theme="dark"] .btn-primary {
     background-color: #2176bd !important;

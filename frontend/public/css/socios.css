@@ -1,3 +1,7 @@
+/* Justificar columnas de la tabla de socios */
+#tablaSocios th, #tablaSocios td {
+    text-align: left;
+}
 :root {
     --primary-color: #3498db;
     --secondary-color: #2c3e50;

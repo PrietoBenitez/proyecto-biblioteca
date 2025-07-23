@@ -21,6 +21,23 @@
             <button type="submit">Ingresar</button>
         </form>
         <div id="loginError" class="error" style="display:none;"></div>
+        <button id="btnRegistrar" type="button">Registrar usuario</button>
+        <div id="modalRegistrar" class="modal" style="display:none;">
+            <div class="modal-content">
+                <span class="close" id="closeRegistrar">&times;</span>
+                <h2>Registrar usuario</h2>
+                <form id="registrarForm">
+                    <input type="text" id="regUsuario" name="usuario" placeholder="Usuario" required>
+                    <input type="password" id="regContrasena" name="contrasena" placeholder="Contraseña" required>
+                    <input type="text" id="regNombre" name="nombre" placeholder="Nombre" required>
+                    <input type="text" id="regApellido" name="apellido" placeholder="Apellido">
+                    <input type="text" id="regCedula" name="cedula" placeholder="Cédula">
+                    <input type="text" id="regPrivilegios" name="privilegios" placeholder="Privilegios" value="N">
+                    <button type="submit">Registrar</button>
+                </form>
+                <div id="registrarError" class="error" style="display:none;"></div>
+            </div>
+        </div>
     </div>
     <script src="/js/login-redirect.js"></script>
     <script src="/js/login.js"></script>

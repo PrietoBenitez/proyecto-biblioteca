@@ -64,13 +64,16 @@
                 </div>
                 
                 <!-- Área Admin -->
-                <div class="user-section">
-                    <i class="fas fa-user-circle"></i>
-                    <span>Admin</span>
-                    <button id="logoutBtn" class="btn btn-link btn-sm ms-2 p-0 text-secondary" title="Cerrar sesión" style="vertical-align:middle; text-decoration:none;">
-                        <i class="fas fa-sign-out-alt"></i> <span class="d-none d-md-inline">Salir</span>
-                    </button>
-                </div>
+            <div class="user-section d-flex align-items-center gap-2">
+                <i class="fas fa-user-circle"></i>
+                <span id="navbar-usuario">Admin</span>
+                <button id="logoutBtn"
+                    class="btn btn-primary btn-sm rounded-pill d-flex align-items-center px-3"
+                    title="Cerrar sesión"
+                    aria-label="Cerrar sesión">
+                    <i class="fas fa-sign-out-alt me-2"></i>
+                    <span class="d-none d-md-inline">Salir</span>
+                </button>
             </div>
         </div>
     </div>
@@ -84,12 +87,12 @@
                     <h1>Control Bibliotecario <span>Eficiente</span></h1>
                     <p class="lead">Gestión integral de socios, materiales y préstamos en un solo lugar</p>
                     
-                    <div class="action-buttons">
-                        <a href="/prestamos?modal=nuevo" class="btn btn-primary">
-                            <i class="fas fa-plus-circle"></i> Nuevo Préstamo
+                    <div class="action-buttons d-flex flex-wrap gap-3">
+                        <a href="/prestamos?modal=nuevo" class="btn btn-primary rounded-pill px-4 py-2 shadow-sm">
+                            <i class="fas fa-plus-circle me-2"></i> Nuevo Préstamo
                         </a>
-                        <a href="#" class="btn btn-primary">
-                            <i class="fas fa-chart-line"></i> Ver Estadísticas
+                        <a href="/estadisticas" class="btn btn-outline-primary rounded-pill px-4 py-2 shadow-sm">
+                            <i class="fas fa-chart-line me-2"></i> Ver Estadísticas
                         </a>
                     </div>
                 </div>

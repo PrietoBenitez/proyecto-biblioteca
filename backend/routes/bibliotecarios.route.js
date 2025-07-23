@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { getConnection } = require('../config/db');
+const { registrar } = require('../controllers/bibliotecarios.controller');
 
 // GET /api/bibliotecarios - lista todos los bibliotecarios
 router.get('/', async (req, res) => {
@@ -14,4 +15,6 @@ router.get('/', async (req, res) => {
     }
 });
 
+// POST /api/bibliotecarios/registrar
+router.post('/registrar', registrar);
 module.exports = router;

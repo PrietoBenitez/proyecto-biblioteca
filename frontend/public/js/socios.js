@@ -1,3 +1,13 @@
+// Formatea fecha a DD/MM/AAAA
+function formatearFechaDMY(fechaStr) {
+    const fecha = new Date(fechaStr);
+    const dia = String(fecha.getDate()).padStart(2, '0');
+    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+    const anio = fecha.getFullYear();
+    return `${dia}/${mes}/${anio}`;
+}
+
+
 document.addEventListener('DOMContentLoaded', function() {
     const tablaSocios = document.getElementById('tablaSocios');
     const formSocio = document.getElementById('formSocio');
@@ -74,8 +84,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         </button>
                         <button class="btn btn-sm btn-warning ver-sanciones" data-id="${socio.SOCIO_ID}">
                             <i class="fas fa-ban"></i> Sanciones
-                        </button>
-                    </td>
+                    <td>${socio.FECHA_NACIMIENTO ? formatearFechaDMY(socio.FECHA_NACIMIENTO) : '-'}</td>
+                    <td>${socio.FECHA_INSCRIPCION ? formatearFechaDMY(socio.FECHA_INSCRIPCION) : '-'}</td>
                 `;
                 tablaSocios.querySelector('tbody').appendChild(fila);
             });

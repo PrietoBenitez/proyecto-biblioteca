@@ -222,6 +222,19 @@ input:checked + .slider:before {
     border-color: var(--primary-color);
 }
 
+/* Estilo específico para el botón de salir */
+#logoutBtn {
+    font-size: 0.95rem;
+    padding: 0.4rem 1rem;
+    border-radius: 50px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    transition: var(--transition);
+}
+#logoutBtn i {
+    font-size: 1rem;
+}
+
+
 /* Modal y formularios */
 .modal-content {
     border-radius: 12px;

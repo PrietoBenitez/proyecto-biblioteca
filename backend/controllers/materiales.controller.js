@@ -55,23 +55,22 @@ exports.getMaterialById = async (req, res) => {
 // Crear un nuevo material
 exports.createMaterial = async (req, res) => {
     const material = req.body;
+    const bibliotecario_id = req.user && req.user.id ? req.user.id : null;
     if (!material.NOMBRE || !material.SUBTIPO_ID || !material.TIPO_MATERIAL) {
         return res.status(400).json({ error: 'Faltan campos obligatorios' });
     }
     try {
-        // Insertar material
-        const db = require('../models/materiales.model');
-        const insertResult = await db.createMaterial(material);
-        // Obtener el último ID insertado
-        const conn = await require('../config/db').getConnection();
+        // const db = require('../models/materiales.model');
+        // const insertResult = await db.createMaterial(material, bibliotecario_id);
+        // const conn = await require('../config/db').getConnection();
+        const conn = req.dbConn;
+        const insertResult = await materialesModel.createMaterial(material, bibliotecario_id, conn);
         const lastIdResult = await conn.query('SELECT MAX(NUMERO_ID) as lastId FROM MATERIALES');
         await conn.close();
         const lastId = lastIdResult.rows ? lastIdResult.rows[0].lastId : lastIdResult[0].lastId;
         if (!lastId) return res.status(201).json({ message: 'Material creado, pero no se pudo obtener el registro.' });
-        // Obtener el material recién creado
         const m = await db.getMaterialById(lastId);
         if (!m) return res.status(201).json({ message: 'Material creado, pero no se pudo obtener el registro.' });
-        // Mapear igual que en el listado
         const materialMap = {
             id: m.NUMERO_ID,
             nombre: m.NOMBRE,
@@ -106,15 +105,14 @@ exports.createMaterial = async (req, res) => {
 exports.updateMaterial = async (req, res) => {
     const { id } = req.params;
     const material = req.body;
-
+    const bibliotecario_id = req.user && req.user.id ? req.user.id : null;
     try {
-        const result = await materialesModel.updateMaterial(id, material);
-
+        // const result = await materialesModel.updateMaterial(id, material, bibliotecario_id);
+        const conn = req.dbConn;
+        const result = await materialesModel.updateMaterial(id, material, bibliotecario_id, conn);
         if (!result || result.affectedRows === 0 || result.count === 0) {
             return res.status(404).json({ message: 'Material no encontrado' });
         }
-
-        // Obtener el material actualizado y mapear igual que en el listado
         const m = await materialesModel.getMaterialById(id);
         if (!m) return res.json({ message: 'Material actualizado, pero no se pudo obtener el registro.' });
         const materialMap = {

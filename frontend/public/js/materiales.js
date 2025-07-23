@@ -9,6 +9,42 @@ function formatearFechaDMY(fechaStr) {
 
 
 document.addEventListener('DOMContentLoaded', function() {
+    // --- Mensajes amigables para triggers de materiales ---
+    function normalizarMensaje(s) {
+        return s ? s.replace(/\s+/g, ' ').trim().toLowerCase() : '';
+    }
+
+    function extraerMensajeRaiserror(resp) {
+        let msg = resp && resp.error ? resp.error : '';
+        if (resp && resp.odbcErrors && Array.isArray(resp.odbcErrors) && resp.odbcErrors.length > 0) {
+            const raiserror = resp.odbcErrors.find(e => e.message && e.message.includes('RAISERROR executed:'));
+            if (raiserror) {
+                let after = raiserror.message.split('RAISERROR executed:')[1];
+                let endIdx = after ? after.search(/(\\n|\n|\r|\r\n|$)/) : -1;
+                if (endIdx !== -1) {
+                    msg = after.slice(0, endIdx).trim();
+                } else {
+                    msg = after ? after.trim() : msg;
+                }
+            } else {
+                msg = resp.odbcErrors[0].message || msg;
+            }
+        } else if (msg && msg.includes('RAISERROR executed:')) {
+            let after = msg.split('RAISERROR executed:')[1];
+            let endIdx = after ? after.search(/(\\n|\n|\r|\r\n|$)/) : -1;
+            if (endIdx !== -1) {
+                msg = after.slice(0, endIdx).trim();
+            } else {
+                msg = after ? after.trim() : msg;
+            }
+        }
+        return msg;
+    }
+
+    const mensajesTriggersMateriales = {
+        'solo los bibliotecarios con privilegios pueden marcar materiales en mantenimiento.': 'Solo los bibliotecarios con privilegios pueden marcar materiales en mantenimiento.',
+        'solo los bibliotecarios con privilegios pueden cambiar el campo restringido.': 'Solo los bibliotecarios con privilegios pueden cambiar el campo RESTRINGIDO.'
+    };
     const tablaMateriales = document.getElementById('tablaMateriales');
     const formMaterial = document.getElementById('formMaterial');
     const modalMaterial = new bootstrap.Modal(document.getElementById('modalMaterial'));
@@ -178,10 +214,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(materialData)
             });
-            if (!response.ok) throw new Error(await response.text());
-            mostrarAlerta(`Material ${materialId ? 'actualizado' : 'creado'} correctamente`, 'success');
-            modalMaterial.hide();
-            cargarMateriales();
+            let respJson;
+            try {
+                respJson = await response.json();
+            } catch {
+                respJson = null;
+            }
+            if (response.ok && (!respJson || !respJson.error)) {
+                mostrarAlerta(`Material ${materialId ? 'actualizado' : 'creado'} correctamente`, 'success');
+                modalMaterial.hide();
+                cargarMateriales();
+            } else {
+                // Extrae y normaliza el mensaje de RAISERROR si existe
+                let msg = extraerMensajeRaiserror(respJson || {});
+                const msgNorm = normalizarMensaje(msg);
+                if (mensajesTriggersMateriales[msgNorm]) {
+                    mostrarAlerta(mensajesTriggersMateriales[msgNorm], 'danger');
+                } else {
+                    mostrarAlerta(msg || (respJson && respJson.error) || 'Error al guardar material', 'danger');
+                }
+            }
         } catch (error) {
             mostrarAlerta(error.message, 'danger');
         }

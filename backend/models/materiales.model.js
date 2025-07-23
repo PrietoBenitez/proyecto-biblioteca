@@ -34,78 +34,159 @@ function toNull(v) {
     return v === '' ? null : v;
 }
 
-async function createMaterial(data) {
-    const db = await getConnection();
+// async function createMaterial(data) {
+//     const db = await getConnection();
+//     if (arguments.length > 1 && arguments[1]) {
+//         await db.query(`SET TEMPORARY OPTION CONNECTION_PROPERTY('CURRENT_BIBLIOTECARIO_ID') = ${arguments[1]}`);
+//     }
+//     const insertQuery = `
+//         INSERT INTO MATERIALES (
+//             SUBTIPO_ID, NACIONALIDAD, DONANTE_ID, NOMBRE, FORMATO, UBICACION, VALOR_GS, TIPO_MATERIAL, CONDICION, DESCRIPCION, DISPONIBILIDAD, RESTRINGIDO, DONADO, FECHA_DONACION, ESTADO_DONACION
+//         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+//     `;
+//     const values = [
+//         toNull(data.SUBTIPO_ID) || null,
+//         toNull(data.NACIONALIDAD) || null,
+//         toNull(data.DONANTE_ID) || null,
+//         data.NOMBRE,
+//         toNull(data.FORMATO) || null,
+//         toNull(data.UBICACION) || null,
+//         toNull(data.VALOR_GS) || null,
+//         toNull(data.TIPO_MATERIAL) || null,
+//         toNull(data.CONDICION) || 'B',
+//         toNull(data.DESCRIPCION) || null,
+//         toNull(data.DISPONIBILIDAD) || 'D',
+//         toNull(data.RESTRINGIDO) || 'N',
+//         toNull(data.DONADO) || 'N',
+//         toNull(data.FECHA_DONACION) || null,
+//         toNull(data.ESTADO_DONACION) || null
+//     ];
+//     const result = await db.query(insertQuery, values);
+//     await db.close();
+//     return { affectedRows: result.count || result.affectedRows || 0 };
+// }
+
+async function createMaterial(data, bibliotecarioId, conn = null) {
+    const db = conn || await getConnection(); // usar conexión externa o abrir nueva si no hay
+
+    // Ya no necesitás hacer esto:
+    // if (arguments.length > 1 && arguments[1]) {
+    //     await db.query(`SET TEMPORARY OPTION CONNECTION_PROPERTY('CURRENT_BIBLIOTECARIO_ID') = ${arguments[1]}`);
+    // }
+
     const insertQuery = `
         INSERT INTO MATERIALES (
             SUBTIPO_ID, NACIONALIDAD, DONANTE_ID, NOMBRE, FORMATO, UBICACION, VALOR_GS, TIPO_MATERIAL, CONDICION, DESCRIPCION, DISPONIBILIDAD, RESTRINGIDO, DONADO, FECHA_DONACION, ESTADO_DONACION
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const values = [
-        toNull(data.SUBTIPO_ID) || null,
-        toNull(data.NACIONALIDAD) || null,
-        toNull(data.DONANTE_ID) || null,
+        toNull(data.SUBTIPO_ID),
+        toNull(data.NACIONALIDAD),
+        toNull(data.DONANTE_ID),
         data.NOMBRE,
-        toNull(data.FORMATO) || null,
-        toNull(data.UBICACION) || null,
-        toNull(data.VALOR_GS) || null,
-        toNull(data.TIPO_MATERIAL) || null,
+        toNull(data.FORMATO),
+        toNull(data.UBICACION),
+        toNull(data.VALOR_GS),
+        toNull(data.TIPO_MATERIAL),
         toNull(data.CONDICION) || 'B',
-        toNull(data.DESCRIPCION) || null,
+        toNull(data.DESCRIPCION),
         toNull(data.DISPONIBILIDAD) || 'D',
         toNull(data.RESTRINGIDO) || 'N',
         toNull(data.DONADO) || 'N',
-        toNull(data.FECHA_DONACION) || null,
-        toNull(data.ESTADO_DONACION) || null
+        toNull(data.FECHA_DONACION),
+        toNull(data.ESTADO_DONACION)
     ];
     const result = await db.query(insertQuery, values);
-    await db.close();
+
+    if (!conn) await db.close(); // cerrar solo si la abriste acá
+
     return { affectedRows: result.count || result.affectedRows || 0 };
 }
 
-async function updateMaterial(id, data) {
-    const db = await getConnection();
+
+// async function updateMaterial(id, data) {
+//     const db = await getConnection();
+//     if (arguments.length > 2 && arguments[2]) {
+//         await db.query(`SET TEMPORARY OPTION CONNECTION_PROPERTY('CURRENT_BIBLIOTECARIO_ID') = ${arguments[2]}`);
+//     }
+//     const updateQuery = `
+//         UPDATE MATERIALES SET
+//             SUBTIPO_ID = ?,
+//             NACIONALIDAD = ?,
+//             DONANTE_ID = ?,
+//             NOMBRE = ?,
+//             FORMATO = ?,
+//             UBICACION = ?,
+//             VALOR_GS = ?,
+//             TIPO_MATERIAL = ?,
+//             CONDICION = ?,
+//             DESCRIPCION = ?,
+//             DISPONIBILIDAD = ?,
+//             RESTRINGIDO = ?,
+//             DONADO = ?,
+//             FECHA_DONACION = ?,
+//             ESTADO_DONACION = ?
+//         WHERE NUMERO_ID = ?
+//     `;
+//     const values = [
+//         toNull(data.SUBTIPO_ID) || null,
+//         toNull(data.NACIONALIDAD) || null,
+//         toNull(data.DONANTE_ID) || null,
+//         data.NOMBRE,
+//         toNull(data.FORMATO) || null,
+//         toNull(data.UBICACION) || null,
+//         toNull(data.VALOR_GS) || null,
+//         toNull(data.TIPO_MATERIAL) || null,
+//         toNull(data.CONDICION) || 'B',
+//         toNull(data.DESCRIPCION) || null,
+//         toNull(data.DISPONIBILIDAD) || 'D',
+//         toNull(data.RESTRINGIDO) || 'N',
+//         toNull(data.DONADO) || 'N',
+//         toNull(data.FECHA_DONACION) || null,
+//         toNull(data.ESTADO_DONACION) || null,
+//         id
+//     ];
+//     const result = await db.query(updateQuery, values);
+//     await db.close();
+//     return { affectedRows: result.count || result.affectedRows || 0 };
+// }
+
+async function updateMaterial(id, data, bibliotecarioId, conn = null) {
+    const db = conn || await getConnection();
+
     const updateQuery = `
         UPDATE MATERIALES SET
-            SUBTIPO_ID = ?,
-            NACIONALIDAD = ?,
-            DONANTE_ID = ?,
-            NOMBRE = ?,
-            FORMATO = ?,
-            UBICACION = ?,
-            VALOR_GS = ?,
-            TIPO_MATERIAL = ?,
-            CONDICION = ?,
-            DESCRIPCION = ?,
-            DISPONIBILIDAD = ?,
-            RESTRINGIDO = ?,
-            DONADO = ?,
-            FECHA_DONACION = ?,
-            ESTADO_DONACION = ?
+            SUBTIPO_ID = ?, NACIONALIDAD = ?, DONANTE_ID = ?, NOMBRE = ?, FORMATO = ?, UBICACION = ?,
+            VALOR_GS = ?, TIPO_MATERIAL = ?, CONDICION = ?, DESCRIPCION = ?, DISPONIBILIDAD = ?, RESTRINGIDO = ?,
+            DONADO = ?, FECHA_DONACION = ?, ESTADO_DONACION = ?
         WHERE NUMERO_ID = ?
     `;
     const values = [
-        toNull(data.SUBTIPO_ID) || null,
-        toNull(data.NACIONALIDAD) || null,
-        toNull(data.DONANTE_ID) || null,
+        toNull(data.SUBTIPO_ID),
+        toNull(data.NACIONALIDAD),
+        toNull(data.DONANTE_ID),
         data.NOMBRE,
-        toNull(data.FORMATO) || null,
-        toNull(data.UBICACION) || null,
-        toNull(data.VALOR_GS) || null,
-        toNull(data.TIPO_MATERIAL) || null,
+        toNull(data.FORMATO),
+        toNull(data.UBICACION),
+        toNull(data.VALOR_GS),
+        toNull(data.TIPO_MATERIAL),
         toNull(data.CONDICION) || 'B',
-        toNull(data.DESCRIPCION) || null,
+        toNull(data.DESCRIPCION),
         toNull(data.DISPONIBILIDAD) || 'D',
         toNull(data.RESTRINGIDO) || 'N',
         toNull(data.DONADO) || 'N',
-        toNull(data.FECHA_DONACION) || null,
-        toNull(data.ESTADO_DONACION) || null,
+        toNull(data.FECHA_DONACION),
+        toNull(data.ESTADO_DONACION),
         id
     ];
+
     const result = await db.query(updateQuery, values);
-    await db.close();
+
+    if (!conn) await db.close();
+
     return { affectedRows: result.count || result.affectedRows || 0 };
 }
+
 
 async function deleteMaterial(id) {
     const db = await getConnection();

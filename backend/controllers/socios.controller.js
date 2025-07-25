@@ -125,18 +125,47 @@ exports.updateSocio = async (req, res) => {
 exports.deleteSocio = async (req, res) => {
     const { id } = req.params;
 
+    console.log('🗑️ BACKEND DELETE SOCIO - Iniciando eliminación ID:', id);
+
     try {
         const result = await sociosModel.deleteSocio(id);
+        console.log('🗑️ BACKEND DELETE SOCIO - Resultado del modelo:', result);
 
         if (!result || result.affectedRows === 0 || result.count === 0) {
+            console.log('❌ BACKEND DELETE SOCIO - Socio no encontrado o no eliminado');
             return res.status(404).json({ message: 'Socio no encontrado' });
         }
 
+        console.log('✅ BACKEND DELETE SOCIO - Eliminación exitosa');
         res.json({ message: 'Socio eliminado exitosamente' });
     } catch (error) {
-        // Si hay sanciones activas, el trigger de la DB impedirá el borrado y enviará un mensaje de error.
-        // Mostramos el mensaje del trigger.
-        res.status(500).json({ error: error.message });
+        console.error('❌ BACKEND DELETE SOCIO - Error capturado:', error);
+        console.log('🔍 BACKEND DELETE SOCIO - Error completo:', JSON.stringify(error, null, 2));
+        console.log('🔍 BACKEND DELETE SOCIO - Error message:', error.message);
+        console.log('🔍 BACKEND DELETE SOCIO - Error code:', error.code);
+        console.log('🔍 BACKEND DELETE SOCIO - Error state:', error.state);
+        
+        // Verificar si hay errores ODBC específicos
+        if (error.odbcErrors && Array.isArray(error.odbcErrors)) {
+            console.log('🔍 BACKEND DELETE SOCIO - ODBC Errors encontrados:', error.odbcErrors.length);
+            error.odbcErrors.forEach((odbcError, index) => {
+                console.log(`🔍 BACKEND DELETE SOCIO - ODBC Error ${index + 1}:`, odbcError);
+                console.log(`  - State: ${odbcError.state}`);
+                console.log(`  - Code: ${odbcError.code}`);
+                console.log(`  - Message: ${odbcError.message}`);
+            });
+            
+            // Devolver información detallada de errores ODBC
+            res.status(500).json({ 
+                error: error.message,
+                odbcErrors: error.odbcErrors,
+                details: 'Error ODBC detallado disponible en logs del servidor'
+            });
+        } else {
+            // Si hay sanciones activas, el trigger de la DB impedirá el borrado y enviará un mensaje de error.
+            // Mostramos el mensaje del trigger.
+            res.status(500).json({ error: error.message });
+        }
     }
 };
 

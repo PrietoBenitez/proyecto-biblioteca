@@ -1,20 +1,26 @@
 const express = require('express');
 const router = express.Router();
-const { getConnection } = require('../config/db');
-const { registrar } = require('../controllers/bibliotecarios.controller');
+const bibliotecarioController = require('../controllers/bibliotecarios.controller');
 
-// GET /api/bibliotecarios - lista todos los bibliotecarios
-router.get('/', async (req, res) => {
-    try {
-        const db = await getConnection();
-        const result = await db.query('SELECT * FROM BIBLIOTECARIOS ORDER BY NOMBRE');
-        await db.close();
-        res.json(Array.isArray(result.rows) ? result.rows : result);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
+// GET /api/bibliotecarios - obtener todos los bibliotecarios
+router.get('/', bibliotecarioController.getAllBibliotecarios);
 
-// POST /api/bibliotecarios/registrar
-router.post('/registrar', registrar);
+// GET /api/bibliotecarios/filtrados - obtener bibliotecarios filtrados con paginación
+router.get('/filtrados', bibliotecarioController.getBibliotecariosFiltrados);
+
+// GET /api/bibliotecarios/:id - obtener un bibliotecario por ID
+router.get('/:id', bibliotecarioController.getBibliotecarioById);
+
+// POST /api/bibliotecarios - crear un nuevo bibliotecario
+router.post('/', bibliotecarioController.createBibliotecario);
+
+// PUT /api/bibliotecarios/:id - actualizar un bibliotecario
+router.put('/:id', bibliotecarioController.updateBibliotecario);
+
+// DELETE /api/bibliotecarios/:id - eliminar un bibliotecario
+router.delete('/:id', bibliotecarioController.deleteBibliotecario);
+
+// POST /api/bibliotecarios/registrar - registro de usuarios (mantener compatibilidad)
+router.post('/registrar', bibliotecarioController.registrar);
+
 module.exports = router;

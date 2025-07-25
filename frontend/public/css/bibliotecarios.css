@@ -1,7 +1,8 @@
-/* Justificar columnas de la tabla de socios */
-#tablaSocios th, #tablaSocios td {
+/* Justificar columnas de la tabla de bibliotecarios */
+#tablaBibliotecarios th, #tablaBibliotecarios td {
     text-align: left;
 }
+
 :root {
     --primary-color: #3498db;
     --secondary-color: #2c3e50;
@@ -114,119 +115,16 @@ body {
     padding: 2rem 0;
 }
 
-.welcome-container {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 3rem;
-}
-
-.welcome-text {
-    flex: 1;
-    max-width: 600px;
-}
-
-.welcome-text h1 {
-    font-size: 2.5rem;
-    font-weight: 700;
-    margin-bottom: 1rem;
-    line-height: 1.2;
-}
-
-.welcome-text h1 span {
-    color: var(--primary-color);
-}
-
-.welcome-text .lead {
-    font-size: 1.2rem;
-    color: var(--text-light);
-    margin-bottom: 2rem;
-}
-
-.action-buttons .btn {
-    padding: 0.6rem 1.2rem;
-    font-weight: 500;
-    margin-right: 1rem;
-    margin-bottom: 0.5rem;
-}
-
-.action-buttons .btn i {
-    margin-right: 8px;
-}
-
-.welcome-image {
-    flex: 1;
-    text-align: center;
-}
-
-.welcome-image img {
-    max-width: 100%;
-    height: auto;
-    max-height: 300px;
-}
-
-/* Tarjetas de resumen */
-.summary-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 1.5rem;
-    margin-top: 2rem;
-}
-
-.summary-card {
+/* Contenedor principal */
+main.container,
+.container.py-4 {
     background-color: var(--white);
-    border-radius: 10px;
-    padding: 1.5rem;
-    box-shadow: var(--shadow);
-    transition: var(--transition);
-    display: flex;
-    align-items: center;
-}
-
-.summary-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-}
-
-.card-icon {
-    width: 50px;
-    height: 50px;
-    background-color: rgba(52, 152, 219, 0.1);
-    color: var(--primary-color);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-    margin-right: 1rem;
-}
-
-.summary-card:nth-child(2) .card-icon {
-    background-color: rgba(46, 204, 113, 0.1);
-    color: var(--success-color);
-}
-
-.summary-card:nth-child(3) .card-icon {
-    background-color: rgba(155, 89, 182, 0.1);
-    color: #9b59b6;
-}
-
-.summary-card:nth-child(4) .card-icon {
-    background-color: rgba(231, 76, 60, 0.1);
-    color: var(--accent-color);
-}
-
-.card-content h3 {
-    font-size: 1.8rem;
-    font-weight: 700;
-    margin-bottom: 0.2rem;
-    color: var(--dark-color);
-}
-
-.card-content p {
-    color: var(--text-light);
-    font-size: 0.9rem;
-    margin: 0;
+    color: var(--text-color);
+    border-radius: 18px;
+    box-shadow: 0 2px 24px rgba(0,0,0,0.10);
+    border: 1px solid #e0e0e0;
+    max-width: 98vw;
+    margin-top: 2.5rem;
 }
 
 /* Pie de página */
@@ -360,14 +258,6 @@ body[data-theme="dark"] .brand-text {
     color: var(--text-color);
 }
 
-body[data-theme="dark"] .summary-card {
-    border: 1px solid var(--text-light);
-}
-
-body[data-theme="dark"] .card-content p {
-    color: var(--text-color);   
-}
-
 body[data-theme="dark"] .footer-links a {
     color: var(--text-color);
 }
@@ -376,7 +266,7 @@ body[data-theme="dark"] .footer-copyright {
     color: var(--text-color);
 }
 
-/* Modo oscuro para el contenedor principal de socios */
+/* Modo oscuro para el contenedor principal de bibliotecarios */
 body[data-theme="dark"] main.container,
 body[data-theme="dark"] .container.py-4 {
     background-color: #181b20 !important;
@@ -432,56 +322,16 @@ body[data-theme="dark"] .modal-content {
     border: 1px solid #444a57;
 }
 
-/* Estilos para el contenedor principal en modo claro */
-main.container,
-.container.py-4 {
-    background-color: var(--white);
-    color: var(--text-color);
-    border-radius: 18px;
-    box-shadow: 0 2px 24px rgba(0,0,0,0.10);
-    border: 1px solid #e0e0e0;
-    max-width: 98vw;
-    margin-top: 2.5rem;
-}
-
-/* Contenedor principal socios destacado (si no existe, agregar la clase en el HTML) */
-.socios-main-container {
-    background-color: var(--white);
-    color: var(--text-color);
-    border-radius: 18px;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.13);
-    border: 1.5px solid #e0e0e0;
-    max-width: 98vw;
-    margin-top: 2.5rem;
-    padding: 2.5rem 2rem 2rem 2rem;
-    /* Elimina el efecto de borde al hacer hover o focus */
-    transition: none;
-}
-
-.socios-main-container:focus-within,
-.socios-main-container:hover {
-    /* Elimina el cambio de sombra y borde al hacer hover/focus */
-    box-shadow: 0 4px 24px rgba(0,0,0,0.13);
-    border-color: #e0e0e0;
-}
-
-body[data-theme="dark"] .socios-main-container {
-    background-color: #181b20 !important;
-    color: #fff !important;
-    border-radius: 18px;
-    box-shadow: 0 2px 24px rgba(0,0,0,0.45);
-    border: 1.5px solid #23272f;
-}
-
-/* Input de búsqueda de socios: texto y placeholder visibles en dark mode */
-body[data-theme="dark"] .socios-main-container input[type="search"],
-body[data-theme="dark"] .socios-main-container input[type="text"] {
+/* Input de búsqueda de bibliotecarios: texto y placeholder visibles en dark mode */
+body[data-theme="dark"] input[type="search"],
+body[data-theme="dark"] input[type="text"] {
     background-color: #23272f !important;
     color: #fff !important;
     border-color: #444a57 !important;
 }
-body[data-theme="dark"] .socios-main-container input[type="search"]::placeholder,
-body[data-theme="dark"] .socios-main-container input[type="text"]::placeholder {
+
+body[data-theme="dark"] input[type="search"]::placeholder,
+body[data-theme="dark"] input[type="text"]::placeholder {
     color: #b0b0b0 !important;
     opacity: 1 !important;
 }
@@ -539,29 +389,22 @@ body[data-theme="dark"] .pagination .page-item.active .page-link {
     border-color: var(--primary-color);
 }
 
-/* Responsive */
-@media (max-width: 992px) {
-    .welcome-container {
-        flex-direction: column;
-        text-align: center;
-    }
-    
-    .welcome-text {
-        margin-bottom: 2rem;
-        max-width: 100%;
-    }
-    
-    .action-buttons {
-        justify-content: center;
-    }
-    
+/* Badge para privilegios */
+.badge-privilegios {
+    font-size: 0.8rem;
 }
 
+.badge-admin {
+    background-color: var(--warning-color) !important;
+    color: #000 !important;
+}
+
+.badge-normal {
+    background-color: var(--success-color) !important;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
-    .welcome-text h1 {
-        font-size: 2rem;
-    }
-    
     .footer-content {
         flex-direction: column;
         text-align: center;

@@ -41,6 +41,7 @@ async function createMaterial(data) {
             SUBTIPO_ID, NACIONALIDAD, DONANTE_ID, NOMBRE, FORMATO, UBICACION, VALOR_GS, TIPO_MATERIAL, CONDICION, DESCRIPCION, DISPONIBILIDAD, RESTRINGIDO, DONADO, FECHA_DONACION, ESTADO_DONACION
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
+    
     const values = [
         toNull(data.SUBTIPO_ID) || null,
         toNull(data.NACIONALIDAD) || null,
@@ -58,60 +59,113 @@ async function createMaterial(data) {
         toNull(data.FECHA_DONACION) || null,
         toNull(data.ESTADO_DONACION) || null
     ];
-    const result = await db.query(insertQuery, values);
-    await db.close();
-    return { affectedRows: result.count || result.affectedRows || 0 };
+    
+    try {
+        const result = await db.query(insertQuery, values);
+        await db.close();
+        return { affectedRows: result.count || result.affectedRows || 0 };
+    } catch (error) {
+        console.error('❌ Error al crear material:', error.message);
+        await db.close();
+        throw error;
+    }
 }
 
-async function updateMaterial(id, data) {
+async function updateMaterial(id, data, bibliotecario = null) {
+    console.log('🔍 MODEL UPDATE - ID:', id, 'Datos recibidos:', JSON.stringify(data, null, 2));
+    console.log('🔍 MODEL UPDATE - Bibliotecario:', bibliotecario);
+    
     const db = await getConnection();
-    const updateQuery = `
-        UPDATE MATERIALES SET
-            SUBTIPO_ID = ?,
-            NACIONALIDAD = ?,
-            DONANTE_ID = ?,
-            NOMBRE = ?,
-            FORMATO = ?,
-            UBICACION = ?,
-            VALOR_GS = ?,
-            TIPO_MATERIAL = ?,
-            CONDICION = ?,
-            DESCRIPCION = ?,
-            DISPONIBILIDAD = ?,
-            RESTRINGIDO = ?,
-            DONADO = ?,
-            FECHA_DONACION = ?,
-            ESTADO_DONACION = ?
-        WHERE NUMERO_ID = ?
-    `;
-    const values = [
-        toNull(data.SUBTIPO_ID) || null,
-        toNull(data.NACIONALIDAD) || null,
-        toNull(data.DONANTE_ID) || null,
-        data.NOMBRE,
-        toNull(data.FORMATO) || null,
-        toNull(data.UBICACION) || null,
-        toNull(data.VALOR_GS) || null,
-        toNull(data.TIPO_MATERIAL) || null,
-        toNull(data.CONDICION) || 'B',
-        toNull(data.DESCRIPCION) || null,
-        toNull(data.DISPONIBILIDAD) || 'D',
-        toNull(data.RESTRINGIDO) || 'N',
-        toNull(data.DONADO) || 'N',
-        toNull(data.FECHA_DONACION) || null,
-        toNull(data.ESTADO_DONACION) || null,
-        id
-    ];
-    const result = await db.query(updateQuery, values);
-    await db.close();
-    return { affectedRows: result.count || result.affectedRows || 0 };
+    
+    try {
+        // Establecer contexto de bibliotecario para el trigger modificado
+        if (bibliotecario) {
+            try {
+                const bibliotecarioId = bibliotecario.id || 1;
+                // Crear una tabla temporal para el contexto del bibliotecario
+                await db.query(`
+                    IF NOT EXISTS (SELECT 1 FROM SYS.SYSTABLE WHERE table_name = 'bibliotecario_context') THEN
+                        CREATE GLOBAL TEMPORARY TABLE bibliotecario_context (bibliotecario_id INTEGER) ON COMMIT PRESERVE ROWS;
+                    END IF;
+                `);
+                // Insertar el ID del bibliotecario actual
+                await db.query(`DELETE FROM bibliotecario_context`);
+                await db.query(`INSERT INTO bibliotecario_context (bibliotecario_id) VALUES (${bibliotecarioId})`);
+                console.log('✅ Contexto de bibliotecario establecido en tabla temporal:', bibliotecarioId);
+            } catch (ctxError) {
+                console.log('⚠️ No se pudo establecer contexto de bibliotecario:', ctxError.message);
+                // Si no se puede establecer, el trigger debería fallar con error de autenticación
+            }
+        }
+        
+        const updateQuery = `
+            UPDATE MATERIALES SET
+                SUBTIPO_ID = ?,
+                NACIONALIDAD = ?,
+                DONANTE_ID = ?,
+                NOMBRE = ?,
+                FORMATO = ?,
+                UBICACION = ?,
+                VALOR_GS = ?,
+                TIPO_MATERIAL = ?,
+                CONDICION = ?,
+                DESCRIPCION = ?,
+                DISPONIBILIDAD = ?,
+                RESTRINGIDO = ?,
+                DONADO = ?,
+                FECHA_DONACION = ?,
+                ESTADO_DONACION = ?
+            WHERE NUMERO_ID = ?
+        `;
+        const values = [
+            toNull(data.SUBTIPO_ID) || null,
+            toNull(data.NACIONALIDAD) || null,
+            toNull(data.DONANTE_ID) || null,
+            data.NOMBRE,
+            toNull(data.FORMATO) || null,
+            toNull(data.UBICACION) || null,
+            toNull(data.VALOR_GS) || null,
+            toNull(data.TIPO_MATERIAL) || null,
+            toNull(data.CONDICION) || 'B',
+            toNull(data.DESCRIPCION) || null,
+            toNull(data.DISPONIBILIDAD) || 'D',
+            toNull(data.RESTRINGIDO) || 'N',
+            toNull(data.DONADO) || 'N',
+            toNull(data.FECHA_DONACION) || null,
+            toNull(data.ESTADO_DONACION) || null,
+            id
+        ];
+        
+        console.log('📝 MODEL UPDATE - Valores finales:', values);
+        
+        const result = await db.query(updateQuery, values);
+        console.log('✅ MODEL UPDATE - Resultado:', result);
+        await db.close();
+        return { affectedRows: result.count || result.affectedRows || 0 };
+    } catch (error) {
+        console.error('❌ MODEL UPDATE - Error completo:', error);
+        await db.close();
+        throw error;
+    }
 }
 
 async function deleteMaterial(id) {
+    console.log('🗑️ MODEL DELETE - Iniciando eliminación en base de datos para ID:', id);
+    
     const db = await getConnection();
-    const result = await db.query('DELETE FROM MATERIALES WHERE NUMERO_ID = ?', [id]);
-    await db.close();
-    return { affectedRows: result.count || result.affectedRows || 0 };
+    try {
+        const result = await db.query('DELETE FROM MATERIALES WHERE NUMERO_ID = ?', [id]);
+        console.log('🗑️ MODEL DELETE - Resultado de query DELETE:', result);
+        console.log('🗑️ MODEL DELETE - Rows afectadas:', result.count || result.affectedRows || 0);
+        
+        await db.close();
+        return { affectedRows: result.count || result.affectedRows || 0 };
+    } catch (error) {
+        console.error('❌ MODEL DELETE - Error en query DELETE:', error.message);
+        console.error('❌ MODEL DELETE - Error completo:', error);
+        await db.close();
+        throw error;
+    }
 }
 
 // Filtros y paginación

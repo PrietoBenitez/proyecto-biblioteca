@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bibliotecarios - Sistema de Biblioteca</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/bibliotecarios.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+    <!-- Barra de navegación -->
+    <nav class="navbar navbar-expand-lg navbar-custom">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <div class="brand-logo">
+                    <i class="fas fa-book-open"></i>
+                </div>
+                <span class="brand-text">Gest<span>Lib</span></span>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="/"><i class="fas fa-home"></i> Inicio</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/socios"><i class="fas fa-users"></i> Socios</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/materiales"><i class="fas fa-book"></i> Materiales</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/prestamos"><i class="fas fa-exchange-alt"></i> Préstamos</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/donantes"><i class="fas fa-hand-holding-heart"></i> Donantes</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/instituciones"><i class="fas fa-university"></i> Instituciones</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="/bibliotecarios"><i class="fas fa-user-check"></i> Bibliotecarios</a></li>
+                </ul>
+                <div class="d-flex align-items-center ms-3 gap-3">
+                    <div class="theme-switch">
+                        <label class="switch">
+                            <input type="checkbox" id="theme-toggle">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="user-section d-flex align-items-center gap-2">
+                        <i class="fas fa-user-circle"></i>
+                        <span id="navbar-usuario">Admin</span>
+                        <button id="logoutBtn"
+                            class="btn btn-primary btn-sm rounded-pill d-flex align-items-center px-3"
+                            title="Cerrar sesión"
+                            aria-label="Cerrar sesión">
+                            <i class="fas fa-sign-out-alt me-2"></i>
+                            <span class="d-none d-md-inline">Salir</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenido principal -->
+    <main class="container py-4 donantes-main-container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="mb-0"><i class="fas fa-user-check me-2"></i>Gestión de Bibliotecarios</h2>
+            <button class="btn btn-primary" id="btnNuevoBibliotecario" data-bs-toggle="modal" data-bs-target="#modalBibliotecario">
+                <i class="fas fa-plus me-2"></i>Nuevo Bibliotecario
+            </button>
+        </div>
+
+        <!-- Filtros -->
+        <div class="row mb-3">
+            <div class="col-md-4 mb-2 mb-md-0">
+                <input type="text" class="form-control" id="inputFiltroTexto" placeholder="Buscar bibliotecario...">
+            </div>
+        </div>
+
+        <!-- Tabla de bibliotecarios -->
+        <div class="table-responsive">
+            <table class="table table-hover" id="tablaBibliotecarios">
+                <thead class="table-light">
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Nombre</th>
+                        <th>Apellido</th>
+                        <th>Cédula</th>
+                        <th>Privilegios</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Se llena dinámicamente -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginación -->
+        <nav aria-label="Paginación bibliotecarios">
+            <ul class="pagination" id="paginacion">
+                <!-- Se llena dinámicamente -->
+            </ul>
+        </nav>
+    </main>
+
+    <!-- Modal para crear/editar bibliotecario -->
+    <div class="modal fade" id="modalBibliotecario" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="formBibliotecario">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalTitulo">Nuevo Bibliotecario</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="bibliotecarioId">
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="USUARIO" class="form-label">Usuario *</label>
+                                <input type="text" class="form-control" id="USUARIO" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="PRIVILEGIOS" class="form-label">Privilegios</label>
+                                <select class="form-select" id="PRIVILEGIOS">
+                                    <option value="N">Normal</option>
+                                    <option value="Y">Administrador</option>
+                                    <option value="S">Super Administrador</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="NOMBRE" class="form-label">Nombre *</label>
+                                <input type="text" class="form-control" id="NOMBRE" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="APELLIDO" class="form-label">Apellido *</label>
+                                <input type="text" class="form-control" id="APELLIDO" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="CEDULA" class="form-label">Cédula *</label>
+                                <input type="text" class="form-control" id="CEDULA" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="CONTRASENA" class="form-label">Contraseña *</label>
+                                <input type="password" class="form-control" id="CONTRASENA" required>
+                                <div class="form-text" id="passwordHelp">
+                                    Para editar: deja en blanco para mantener la actual
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/theme.js"></script>
+    <script src="/js/auth-check.js"></script>
+    <script src="/js/logout.js"></script>
+    <script src="/js/bibliotecarios.js"></script>
+</body>
+</html>

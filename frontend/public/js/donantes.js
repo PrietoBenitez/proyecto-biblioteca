@@ -61,12 +61,53 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if (e.target.closest('.eliminar')) {
             const id = e.target.closest('.eliminar').dataset.id;
-            if (confirm('¿Seguro que desea eliminar este donante?')) {
+            const fila = e.target.closest('tr');
+            
+            // Obtener información del donante desde la fila de la tabla
+            const celdas = fila.querySelectorAll('td');
+            const cedula = celdas[0]?.textContent?.trim() || 'Sin cédula';
+            const nombre = celdas[1]?.textContent?.trim() || 'Sin nombre';
+            const apellido = celdas[2]?.textContent?.trim() || 'Sin apellido';
+            
+            let titulo = '¿Eliminar donante?';
+            let mensaje = `<strong>${nombre} ${apellido}</strong><br><small class="text-muted">Cédula: ${cedula}</small>`;
+            
+            const result = await Swal.fire({
+                title: titulo,
+                html: mensaje,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Eliminar',
+                cancelButtonText: 'Cancelar',
+                reverseButtons: true,
+                focusCancel: true,
+                width: '350px',
+                padding: '1rem',
+                customClass: {
+                    popup: 'swal2-small',
+                    title: 'swal2-title-small',
+                    content: 'swal2-content-small'
+                }
+            });
+            
+            if (result.isConfirmed) {
                 try {
                     const response = await fetch(`/api/donantes/${id}`, { method: 'DELETE' });
                     const data = await response.json();
                     if (!response.ok) throw data; // Lanzar el objeto completo para conservar odbcErrors
-                    mostrarAlerta(data.message || 'Donante eliminado', 'success');
+                    
+                    Swal.fire({
+                        title: '¡Eliminado!',
+                        text: `Donante eliminado: ${nombre} ${apellido}`,
+                        icon: 'success',
+                        timer: 1500,
+                        showConfirmButton: false,
+                        width: '300px',
+                        padding: '1rem'
+                    });
+                    
                     cargarDonantes();
                 } catch (err) {
                     const msg = String(err.message || '');
@@ -77,9 +118,21 @@ document.addEventListener('DOMContentLoaded', function() {
                         msg.includes('referenced by foreign key') ||
                         (msg.includes('Error executing the sql statement') && msg.includes('23000'))
                     ) {
-                        mostrarAlerta('No se pudo eliminar el donante porque tiene materiales asociados.', 'danger');
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'No se pudo eliminar el donante porque tiene materiales asociados.',
+                            icon: 'error',
+                            width: '300px',
+                            padding: '1rem'
+                        });
                     } else {
-                        mostrarAlerta(msg, 'danger');
+                        Swal.fire({
+                            title: 'Error',
+                            text: msg,
+                            icon: 'error',
+                            width: '300px',
+                            padding: '1rem'
+                        });
                     }
                 }
             }

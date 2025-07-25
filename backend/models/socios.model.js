@@ -82,10 +82,51 @@ async function updateSocio(id, data) {
 
 // Eliminar un socio por ID
 async function deleteSocio(id) {
-    const db = await getConnection();
-    const result = await db.query('DELETE FROM Socios WHERE SOCIO_ID = ?', [id]);
-    await db.close();
-    return { affectedRows: result.count || result.affectedRows || 0 };
+    console.log('🗑️ MODEL DELETE SOCIO - Iniciando eliminación en BD para ID:', id);
+    
+    let db;
+    try {
+        db = await getConnection();
+        console.log('🗑️ MODEL DELETE SOCIO - Conexión a BD establecida');
+        
+        console.log('🗑️ MODEL DELETE SOCIO - Ejecutando query: DELETE FROM Socios WHERE SOCIO_ID = ?', [id]);
+        const result = await db.query('DELETE FROM Socios WHERE SOCIO_ID = ?', [id]);
+        
+        console.log('🗑️ MODEL DELETE SOCIO - Resultado raw de la query:', result);
+        console.log('🗑️ MODEL DELETE SOCIO - result.count:', result.count);
+        console.log('🗑️ MODEL DELETE SOCIO - result.affectedRows:', result.affectedRows);
+        
+        await db.close();
+        console.log('✅ MODEL DELETE SOCIO - Conexión cerrada exitosamente');
+        
+        const affectedRows = result.count || result.affectedRows || 0;
+        console.log('🗑️ MODEL DELETE SOCIO - Filas afectadas finales:', affectedRows);
+        
+        return { affectedRows };
+    } catch (error) {
+        console.error('❌ MODEL DELETE SOCIO - Error en deleteSocio:', error);
+        console.log('🔍 MODEL DELETE SOCIO - Error message:', error.message);
+        console.log('🔍 MODEL DELETE SOCIO - Error code:', error.code);
+        console.log('🔍 MODEL DELETE SOCIO - Error state:', error.state);
+        console.log('🔍 MODEL DELETE SOCIO - Error stack:', error.stack);
+        
+        // Verificar propiedades específicas del error ODBC
+        if (error.odbcErrors) {
+            console.log('🔍 MODEL DELETE SOCIO - ODBC Errors:', error.odbcErrors);
+        }
+        
+        if (db) {
+            try {
+                await db.close();
+                console.log('🔧 MODEL DELETE SOCIO - Conexión cerrada después del error');
+            } catch (closeError) {
+                console.error('❌ MODEL DELETE SOCIO - Error cerrando conexión:', closeError);
+            }
+        }
+        
+        // Re-lanzar el error para que lo capture el controlador
+        throw error;
+    }
 }
 
 // Obtener socios filtrados con paginación y conteo total (JOINs con nombres reales de tablas)

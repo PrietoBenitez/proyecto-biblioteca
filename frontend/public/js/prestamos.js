@@ -45,21 +45,45 @@ const nuevoBtn = document.querySelector('button[data-bs-toggle="modal"][data-bs-
 if (nuevoBtn) {
     nuevoBtn.addEventListener('click', () => {
         resetForm();
+        // Al crear: Ocultar campos de devolución y botón sanciones
         const grupoFechaRealDevolucion = document.getElementById('grupo-fecha-real-devolucion');
+        const grupoEstadoDevolucion = document.getElementById('grupo-estado-devolucion');
+        const grupoComentarioEstado = document.getElementById('grupo-comentario-estado');
+        const btnSancionesModal = document.getElementById('btnSancionesModal');
+        
         if (grupoFechaRealDevolucion) grupoFechaRealDevolucion.style.display = 'none';
+        if (grupoEstadoDevolucion) grupoEstadoDevolucion.style.display = 'none';
+        if (grupoComentarioEstado) grupoComentarioEstado.style.display = 'none';
+        if (btnSancionesModal) btnSancionesModal.style.display = 'none';
+        
+        // Cambiar título del modal
+        document.getElementById('modalTitulo').textContent = 'Nuevo Préstamo';
     });
 }
 
 let prestamosData = [];
 
 function cargarPrestamos() {
-    fetch('/api/prestamos')
-        .then(res => res.json())
+    fetch('/api/prestamos', {
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+    })
+        .then(async res => {
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.error || errorData.message || 'Error al cargar préstamos');
+            }
+            return res.json();
+        })
         .then(data => {
             prestamosData = data;
             mostrarPrestamos(data);
         })
-        .catch(err => console.error('Error cargando préstamos:', err));
+        .catch(err => {
+            console.error('Error cargando préstamos:', err);
+            mostrarAlerta('Error al cargar préstamos: ' + err.message, 'danger');
+        });
 }
 
 function mostrarPrestamos(prestamos) {
@@ -96,10 +120,22 @@ function mostrarPrestamos(prestamos) {
                 <div class="d-flex gap-2 justify-content-center">
                     <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalPrestamo" onclick="editarPrestamo(${prestamo.PRESTAMO_ID})"><i class="fas fa-edit"></i></button>
                     <button class="btn btn-sm btn-outline-danger" onclick="eliminarPrestamo(${prestamo.PRESTAMO_ID})"><i class="fas fa-trash-alt"></i></button>
+                    <button class="btn btn-sm btn-warning ver-sanciones-prestamo" data-socio-id="${prestamo.SOCIO_ID}" data-prestamo-id="${prestamo.PRESTAMO_ID}">
+                        <i class="fas fa-ban"></i> Sanciones
+                    </button>
                 </div>
             </td>
         `;
         tbody.appendChild(tr);
+    });
+
+    // Agregar event listeners para los botones de sanciones
+    document.querySelectorAll('.ver-sanciones-prestamo').forEach(button => {
+        button.addEventListener('click', function() {
+            const socioId = this.getAttribute('data-socio-id');
+            const prestamoId = this.getAttribute('data-prestamo-id');
+            mostrarSancionesPrestamo(socioId, prestamoId);
+        });
     });
 }
 
@@ -206,51 +242,51 @@ function guardarPrestamo(e) {
     }
     fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
         body: JSON.stringify(data)
     })
     .then(async res => {
-        let resp;
-        try {
-            resp = await res.json();
-        } catch (e) {
-            // Si la respuesta no es JSON (por ejemplo, error HTML), muestra mensaje genérico
-            mostrarAlerta('Error inesperado del servidor.', 'danger');
-            throw e;
+        if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.error || errorData.message || 'Error desconocido');
         }
-        return resp;
+        return res.json();
     })
     .then(resp => {
-        if (!resp.error) {
-            mostrarAlerta(id ? 'Préstamo actualizado correctamente' : 'Préstamo creado correctamente', 'success');
-            cargarPrestamos();
-            resetForm();
-            const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalPrestamo'));
-            modal.hide();
-        } else {
-            // Extrae y normaliza el mensaje de RAISERROR
-            let msg = extraerMensajeRaiserror(resp);
-            const msgNorm = normalizarMensaje(msg);
-            if (mensajesTriggers[msgNorm]) {
-                mostrarAlerta(mensajesTriggers[msgNorm], 'danger');
-            } else {
-                mostrarAlerta(msg, 'danger');
-            }
-        }
+        mostrarAlerta(id ? 'Préstamo actualizado correctamente' : 'Préstamo creado correctamente', 'success');
+        cargarPrestamos();
+        resetForm();
+        const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalPrestamo'));
+        modal.hide();
     })
     .catch(err => {
-        if (typeof err === 'string') {
-            mostrarAlerta('Error guardando préstamo: ' + err, 'danger');
-        } else {
-            mostrarAlerta('Error guardando préstamo.', 'danger');
-        }
+        console.error('Error en operación:', err);
+        mostrarAlerta(err.message, 'danger');
     });
 }
 
 function editarPrestamo(id) {
-    fetch(`/api/prestamos/${id}`)
-        .then(res => res.json())
+    console.log('🔍 EDITAR PRESTAMO - ID:', id);
+    
+    fetch(`/api/prestamos/${id}`, {
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+    })
+        .then(async res => {
+            console.log('🔍 EDITAR PRESTAMO - Response status:', res.status);
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.error || errorData.message || 'Error al cargar préstamo');
+            }
+            return res.json();
+        })
         .then(prestamo => {
+            console.log('🔍 EDITAR PRESTAMO - Datos recibidos:', prestamo);
+            
             document.getElementById('prestamo-id').value = prestamo.PRESTAMO_ID;
             document.getElementById('socio-select').value = prestamo.SOCIO_ID;
             document.getElementById('material-select').value = prestamo.NUMERO_ID;
@@ -283,22 +319,107 @@ function editarPrestamo(id) {
             document.getElementById('comentario').value = prestamo.COMENTARIO || '';
             document.getElementById('comentario-estado').value = prestamo.COMENTARIO_ESTADO || '';
             document.getElementById('cancelar-btn').style.display = '';
+            
+            // Al editar: Mostrar TODOS los campos incluyendo los de devolución
+            const grupoFechaRealDevolucion = document.getElementById('grupo-fecha-real-devolucion');
+            const grupoEstadoDevolucion = document.getElementById('grupo-estado-devolucion');
+            const grupoComentarioEstado = document.getElementById('grupo-comentario-estado');
+            
+            if (grupoFechaRealDevolucion) grupoFechaRealDevolucion.style.display = '';
+            if (grupoEstadoDevolucion) grupoEstadoDevolucion.style.display = '';
+            if (grupoComentarioEstado) grupoComentarioEstado.style.display = '';
+            
+            // Cambiar título del modal
+            document.getElementById('modalTitulo').textContent = 'Editar Préstamo';
+        })
+        .catch(err => {
+            console.error('❌ EDITAR PRESTAMO - Error:', err);
+            mostrarAlerta('Error al cargar datos del préstamo: ' + err.message, 'danger');
         });
-        const grupoFechaRealDevolucion = document.getElementById('grupo-fecha-real-devolucion');
-        if (grupoFechaRealDevolucion) grupoFechaRealDevolucion.style.display = '';
+        
+    // Mostrar los campos de devolución cuando se edita (redundante pero asegura que se muestren)
+    const grupoFechaRealDevolucion = document.getElementById('grupo-fecha-real-devolucion');
+    if (grupoFechaRealDevolucion) grupoFechaRealDevolucion.style.display = '';
 }
 
 function eliminarPrestamo(id) {
-    if (!confirm('¿Está seguro de eliminar este préstamo?')) return;
-    fetch(`/api/prestamos/${id}`, { method: 'DELETE' })
-        .then(res => {
-            if (!res.ok) throw new Error('Error al eliminar préstamo');
-            mostrarMensajeExito('Préstamo eliminado correctamente');
-            cargarPrestamos();
-        })
-        .catch(() => {
-            mostrarMensajeExito('Error al eliminar préstamo');
-        });
+    // Buscar información del préstamo para mostrar mensaje más específico
+    const prestamo = prestamosData.find(p => p.PRESTAMO_ID == id);
+    
+    let titulo = '¿Eliminar préstamo?';
+    let mensaje = '¿Está seguro de eliminar este préstamo?';
+    
+    if (prestamo) {
+        const socio = prestamo.NOMBRE_SOCIO ? `${prestamo.NOMBRE_SOCIO} ${prestamo.APELLIDO_SOCIO || ''}`.trim() : 'Socio desconocido';
+        const material = prestamo.NOMBRE_MATERIAL || 'Material desconocido';
+        const fecha = prestamo.FECHA_PRESTAMO ? formatearFechaDMY(prestamo.FECHA_PRESTAMO) : 'Fecha desconocida';
+        
+        mensaje = `<strong>${material}</strong><br><small class="text-muted">${socio} • ${fecha}</small>`;
+    }
+    
+    Swal.fire({
+        title: titulo,
+        html: mensaje,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Eliminar',
+        cancelButtonText: 'Cancelar',
+        reverseButtons: true,
+        focusCancel: true,
+        width: '350px',
+        padding: '1rem',
+        customClass: {
+            popup: 'swal2-small',
+            title: 'swal2-title-small',
+            content: 'swal2-content-small'
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Proceder con la eliminación
+            fetch(`/api/prestamos/${id}`, { 
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            })
+            .then(async res => {
+                if (!res.ok) {
+                    const errorData = await res.json();
+                    throw new Error(errorData.error || errorData.message || 'Error al eliminar préstamo');
+                }
+                return res.json();
+            })
+            .then(() => {
+                const mensajeExito = prestamo ? 
+                    `Préstamo eliminado: ${prestamo.NOMBRE_MATERIAL || 'Material'}` :
+                    'Préstamo eliminado correctamente';
+                
+                Swal.fire({
+                    title: '¡Eliminado!',
+                    text: mensajeExito,
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false,
+                    width: '300px',
+                    padding: '1rem'
+                });
+                
+                cargarPrestamos();
+            })
+            .catch(err => {
+                console.error('Error al eliminar préstamo:', err);
+                Swal.fire({
+                    title: 'Error',
+                    text: err.message,
+                    icon: 'error',
+                    width: '300px',
+                    padding: '1rem'
+                });
+            });
+        }
+    });
 }
 
 function resetForm() {
@@ -373,3 +494,124 @@ const mensajesTriggers = {
     'se ha aplicado una sanción por devolución tardía.': 'Atención: se aplicó una sanción por devolución tardía.',
     'el socio ya tiene el máximo de sanciones permitidas.': 'El socio ya tiene el máximo de sanciones permitidas.'
 };
+
+// =================== FUNCIONALIDAD DE SANCIONES ===================
+let socioIdActualSancion = null;
+let prestamoIdActualSancion = null;
+
+async function mostrarSancionesPrestamo(socioId, prestamoId) {
+    socioIdActualSancion = socioId;
+    prestamoIdActualSancion = prestamoId;
+    
+    const modalSanciones = new bootstrap.Modal(document.getElementById('modalSanciones'));
+    const modalSancionesBody = document.getElementById('modalSancionesBody');
+    const btnAgregarSancionModal = document.getElementById('btnAgregarSancionModal');
+    const formAgregarSancionContainer = document.getElementById('formAgregarSancionContainer');
+    
+    // Resetear el estado del modal
+    if (formAgregarSancionContainer) formAgregarSancionContainer.style.display = 'none';
+    if (btnAgregarSancionModal) btnAgregarSancionModal.style.display = 'none';
+    
+    modalSancionesBody.innerHTML = `<div class="text-center"><div class="spinner-border" role="status"></div></div>`;
+    modalSanciones.show();
+
+    try {
+        const response = await fetch(`/api/socios/${socioId}/sanciones-y-estado`);
+        if (!response.ok) throw new Error('No se pudo cargar sanciones activas.');
+
+        const data = await response.json();
+        const sanciones = data.sanciones;
+
+        let html = '';
+        if (!sanciones || sanciones.length === 0) {
+            html = '<p class="text-success">Sin sanciones activas</p>';
+            if (btnAgregarSancionModal) btnAgregarSancionModal.style.display = '';
+        } else {
+            if (btnAgregarSancionModal) btnAgregarSancionModal.style.display = 'none';
+            html = sanciones.map(sancion => {
+                let diasRestantes = '';
+                if (sancion.fecha_fin) {
+                    const hoy = new Date();
+                    const fechaFin = new Date(sancion.fecha_fin);
+                    const diffMs = fechaFin.setHours(0,0,0,0) - hoy.setHours(0,0,0,0);
+                    let diffDias = Math.ceil(diffMs / (1000 * 60 * 60 * 24)) + 1;
+                    if (diffDias > 1) {
+                        diasRestantes = `Quedan <b>${diffDias}</b> días de sanción.`;
+                    } else if (diffDias === 1) {
+                        diasRestantes = 'Queda <b>1</b> día de sanción.';
+                    } else if (diffDias === 0) {
+                        diasRestantes = 'La sanción termina hoy.';
+                    } else {
+                        diasRestantes = 'La sanción terminó.';
+                    }
+                } else {
+                    diasRestantes = 'Sanción indefinida.';
+                }
+                return `<div class="mb-3 p-3 border rounded bg-dark bg-opacity-10">
+                    <div><b>Motivo:</b> ${sancion.motivo}</div>
+                    <div><b>Fecha inicio:</b> ${sancion.fecha_inicio ? sancion.fecha_inicio.split('T')[0] : '-'}</div>
+                    <div><b>Fecha fin:</b> ${sancion.fecha_fin ? sancion.fecha_fin.split('T')[0] : 'Indefinida'}</div>
+                    <div class="mt-2">${diasRestantes}</div>
+                </div>`;
+            }).join('');
+        }
+
+        modalSancionesBody.innerHTML = html;
+    } catch (error) {
+        modalSancionesBody.innerHTML = `<div class="alert alert-danger">Error al cargar sanciones.</div>`;
+    }
+    
+    if (formAgregarSancionContainer) formAgregarSancionContainer.style.display = 'none';
+    const formAgregarSancion = document.getElementById('formAgregarSancion');
+    if (formAgregarSancion) formAgregarSancion.reset();
+}
+
+// Event listeners para el modal de sanciones (se ejecutan una sola vez)
+document.addEventListener('DOMContentLoaded', function() {
+    const btnAgregarSancionModal = document.getElementById('btnAgregarSancionModal');
+    const btnCancelarAgregarSancion = document.getElementById('btnCancelarAgregarSancion');
+    const formAgregarSancion = document.getElementById('formAgregarSancion');
+    const formAgregarSancionContainer = document.getElementById('formAgregarSancionContainer');
+
+    if (btnAgregarSancionModal) {
+        btnAgregarSancionModal.addEventListener('click', function() {
+            formAgregarSancionContainer.style.display = '';
+            btnAgregarSancionModal.style.display = 'none';
+        });
+    }
+
+    if (btnCancelarAgregarSancion) {
+        btnCancelarAgregarSancion.addEventListener('click', function(e) {
+            e.preventDefault();
+            formAgregarSancionContainer.style.display = 'none';
+            btnAgregarSancionModal.style.display = '';
+        });
+    }
+
+    if (formAgregarSancion) {
+        formAgregarSancion.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const motivo = document.getElementById('motivoSancion').value;
+            const fecha_inicio = document.getElementById('fechaInicioSancion').value;
+            const fecha_fin = document.getElementById('fechaFinSancion').value;
+            
+            try {
+                const resp = await fetch(`/api/socios/${socioIdActualSancion}/sancionar`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ motivo, fecha_inicio, fecha_fin: fecha_fin || null })
+                });
+                if (!resp.ok) throw new Error('No se pudo agregar la sanción');
+                
+                formAgregarSancionContainer.style.display = 'none';
+                const modalSanciones = bootstrap.Modal.getInstance(document.getElementById('modalSanciones'));
+                modalSanciones.hide();
+                
+                mostrarAlerta('Sanción agregada correctamente', 'success');
+                cargarPrestamos(); // Recargar para reflejar cambios
+            } catch (err) {
+                mostrarAlerta('Error al agregar sanción: ' + err.message, 'danger');
+            }
+        });
+    }
+});

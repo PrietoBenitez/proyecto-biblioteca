@@ -58,16 +58,48 @@ function toDateString(v) {
 }
 
 // Crear préstamo
-async function createPrestamo(data) {
+async function createPrestamo(data, bibliotecario = null) {
     const db = await getConnection();
-    // Validar si ya existe un préstamo activo para el material
-    const checkQuery = `SELECT PRESTAMO_ID FROM PRESTAMOS WHERE NUMERO_ID = ? AND DEVOLUCION IS NULL`;
-    const checkResult = await db.query(checkQuery, [toNull(data.NUMERO_ID)]);
-    if (Array.isArray(checkResult.rows) ? checkResult.rows.length > 0 : checkResult.length > 0) {
-        await db.close();
-        // Retornar error específico para el controlador
-        return { error: 'El material ya tiene un préstamo activo y no puede ser prestado nuevamente hasta su devolución.' };
-    }
+    
+    console.log('🔍 MODEL CREATE PRESTAMO - Bibliotecario:', bibliotecario);
+    console.log('🔍 MODEL CREATE PRESTAMO - Datos:', JSON.stringify(data, null, 2));
+    
+    try {
+        // Establecer contexto de bibliotecario para el trigger
+        if (bibliotecario) {
+            try {
+                const bibliotecarioId = bibliotecario.id || 1;
+                console.log('🔍 MODEL CREATE PRESTAMO - Configurando contexto para bibliotecario:', bibliotecarioId);
+                
+                // Simplificar la creación de la tabla temporal
+                try {
+                    await db.query(`
+                        CREATE OR REPLACE GLOBAL TEMPORARY TABLE bibliotecario_context (
+                            bibliotecario_id INTEGER
+                        ) ON COMMIT PRESERVE ROWS
+                    `);
+                } catch (tableError) {
+                    console.log('⚠️ MODEL CREATE PRESTAMO - Tabla ya existe, continuando...');
+                }
+                
+                // Insertar el ID del bibliotecario actual
+                await db.query(`DELETE FROM bibliotecario_context`);
+                await db.query(`INSERT INTO bibliotecario_context (bibliotecario_id) VALUES (?)`, [bibliotecarioId]);
+                console.log('✅ MODEL CREATE PRESTAMO - Contexto bibliotecario configurado:', bibliotecarioId);
+            } catch (contextError) {
+                console.log('⚠️ MODEL CREATE PRESTAMO - Error configurando contexto bibliotecario:', contextError.message);
+                // Continuar sin contexto si hay error
+            }
+        }
+        
+        // Validar si ya existe un préstamo activo para el material
+        const checkQuery = `SELECT PRESTAMO_ID FROM PRESTAMOS WHERE NUMERO_ID = ? AND DEVOLUCION IS NULL`;
+        const checkResult = await db.query(checkQuery, [toNull(data.NUMERO_ID)]);
+        if (Array.isArray(checkResult.rows) ? checkResult.rows.length > 0 : checkResult.length > 0) {
+            await db.close();
+            // Retornar error específico para el controlador
+            return { error: 'El material ya tiene un préstamo activo y no puede ser prestado nuevamente hasta su devolución.' };
+        }
     const insertQuery = `
         INSERT INTO PRESTAMOS (
             SOCIO_ID, BIBLIOTECARIO_ID, NUMERO_ID, TIPO_PRESTAMO, FECHA_PRESTAMO, COMENTARIO, LIMITE_DEVOLUCION, DEVOLUCION, ESTADO_DEVOLUCION, COMENTARIO_ESTADO
@@ -85,6 +117,10 @@ async function createPrestamo(data) {
         toNull(data.ESTADO_DEVOLUCION) || null,
         toNull(data.COMENTARIO_ESTADO) || null
     ];
+    
+    // console.log('🔍 MODEL CREATE PRESTAMO - Query:', insertQuery);
+    // console.log('🔍 MODEL CREATE PRESTAMO - Values:', values);
+    
     const result = await db.query(insertQuery, values);
     await db.close();
     // Devuelve el ID del préstamo creado si es posible
@@ -92,6 +128,10 @@ async function createPrestamo(data) {
         affectedRows: result.count || result.affectedRows || 0,
         insertId: result.insertId || (result.rows && result.rows[0] && result.rows[0].PRESTAMO_ID) || null
     };
+    } catch (error) {
+        await db.close();
+        throw error;
+    }
 }
 
 // Actualizar préstamo

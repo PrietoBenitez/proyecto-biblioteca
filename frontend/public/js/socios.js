@@ -68,8 +68,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     <td>${socio.APELLIDO}</td>
                     <td>${socio.CORREO || '-'}</td>
                     <td>${socio.DIRECCION || '-'}</td>
-                    <td>${socio.FECHA_NACIMIENTO ? socio.FECHA_NACIMIENTO.split('T')[0] : '-'}</td>
-                    <td>${socio.FECHA_INSCRIPCION ? socio.FECHA_INSCRIPCION.split('T')[0] : '-'}</td>
+                    <td>${socio.FECHA_NACIMIENTO ? formatearFechaDMY(socio.FECHA_NACIMIENTO) : '-'}</td>
+                    <td>${socio.FECHA_INSCRIPCION ? formatearFechaDMY(socio.FECHA_INSCRIPCION) : '-'}</td>
                     <td>${socio.NACIONALIDAD_NOMBRE || '-'}</td>
                     <td>${socio.EDUCACION_NOMBRE || '-'}</td>
                     <td>${socio.PROFESION_NOMBRE || '-'}</td>
@@ -84,8 +84,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         </button>
                         <button class="btn btn-sm btn-warning ver-sanciones" data-id="${socio.SOCIO_ID}">
                             <i class="fas fa-ban"></i> Sanciones
-                    <td>${socio.FECHA_NACIMIENTO ? formatearFechaDMY(socio.FECHA_NACIMIENTO) : '-'}</td>
-                    <td>${socio.FECHA_INSCRIPCION ? formatearFechaDMY(socio.FECHA_INSCRIPCION) : '-'}</td>
+                        </button>
+                    </td>
                 `;
                 tablaSocios.querySelector('tbody').appendChild(fila);
             });
@@ -252,6 +252,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Extrae mensaje de RAISERROR Sybase (igual que préstamos)
     function extraerMensajeRaiserror(resp) {
         let msg = resp && resp.error ? resp.error : '';
+        
+        // Primero revisar si hay errores ODBC específicos
         if (resp && resp.odbcErrors && Array.isArray(resp.odbcErrors) && resp.odbcErrors.length > 0) {
             const raiserror = resp.odbcErrors.find(e => e.message && e.message.includes('RAISERROR executed:'));
             if (raiserror) {
@@ -263,6 +265,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     msg = after ? after.trim() : msg;
                 }
             } else {
+                // Si no hay RAISERROR, usar el primer mensaje ODBC disponible
                 msg = resp.odbcErrors[0].message || msg;
             }
         } else if (msg && msg.includes('RAISERROR executed:')) {
@@ -274,6 +277,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 msg = after ? after.trim() : msg;
             }
         }
+        
+        // Si el mensaje contiene información de clave foránea, limpiarlo un poco
+        if (msg && msg.toLowerCase().includes('primary key') && msg.toLowerCase().includes('foreign key')) {
+            // Mantener el mensaje tal como está para que coincida con nuestro mapeo
+            msg = msg.trim();
+        }
+        
         return msg;
     }
     function normalizarMensaje(s) {
@@ -283,7 +293,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const mensajesTriggers = {
         'el socio ya existe.': 'Ya existe un socio con esos datos.',
         'no se puede eliminar el socio porque tiene préstamos activos.': 'No puedes eliminar un socio con préstamos activos.',
-        'no se puede eliminar el socio porque tiene sanciones activas.': 'No puedes eliminar un socio con sanciones activas.'
+        'no se puede eliminar el socio porque tiene sanciones activas.': 'No puedes eliminar un socio con sanciones activas.',
+        'primary key for row in table \'socios\' is referenced by foreign key \'fk_sancione_reference_socios\' in table \'sanciones': 'No se puede eliminar el socio porque tiene sanciones asociadas. Debe eliminar primero todas las sanciones del socio.',
+        '[sybase][odbc driver][sql anywhere]primary key for row in table \'socios\' is referenced by foreign key \'fk_sancione_reference_socios\' in table \'sanciones': 'No se puede eliminar el socio porque tiene sanciones asociadas. Debe eliminar primero todas las sanciones del socio.',
+        'primary key for row in table socios is referenced by foreign key': 'No se puede eliminar el socio porque tiene registros asociados en otras tablas.',
+        'referenced by foreign key': 'No se puede eliminar el socio porque tiene registros asociados.'
     };
 
     // Formulario submit (crear/actualizar)
@@ -383,33 +397,132 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Eliminar socio
     async function eliminarSocio(e) {
-        if (!confirm('¿Estás seguro de eliminar este socio?')) return;
         const socioId = e.target.closest('button').dataset.id;
+        const fila = e.target.closest('tr');
+        
+        // Obtener información del socio desde la fila de la tabla
+        const celdas = fila.querySelectorAll('td');
+        const nombre = celdas[0]?.textContent?.trim() || 'Socio desconocido';
+        const documento = celdas[1]?.textContent?.trim() || 'Sin documento';
+        const fechaInscripcion = celdas[5]?.textContent?.trim() || 'Sin fecha';
+        
+        let titulo = '¿Eliminar socio?';
+        let mensaje = `<strong>${nombre}</strong><br><small class="text-muted">Doc: ${documento} • Inscripción: ${fechaInscripcion}</small>`;
+        
+        const result = await Swal.fire({
+            title: titulo,
+            html: mensaje,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Eliminar',
+            cancelButtonText: 'Cancelar',
+            reverseButtons: true,
+            focusCancel: true,
+            width: '350px',
+            padding: '1rem',
+            customClass: {
+                popup: 'swal2-small',
+                title: 'swal2-title-small',
+                content: 'swal2-content-small'
+            }
+        });
+        
+        if (!result.isConfirmed) return;
+        
         try {
+            console.log('🗑️ ELIMINAR SOCIO - Iniciando eliminación de socio ID:', socioId);
+            
             const response = await fetch(`/api/socios/${socioId}`, {
                 method: 'DELETE'
             });
+            
+            console.log('🗑️ ELIMINAR SOCIO - Response status:', response.status);
+            console.log('🗑️ ELIMINAR SOCIO - Response ok:', response.ok);
+            
             let resp;
             try {
                 resp = await response.json();
+                console.log('🗑️ ELIMINAR SOCIO - Response JSON:', resp);
             } catch (e) {
-                mostrarAlerta('Error inesperado del servidor.', 'danger');
+                console.error('❌ ELIMINAR SOCIO - Error parseando JSON:', e);
+                console.log('🗑️ ELIMINAR SOCIO - Response text:', await response.text());
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Error inesperado del servidor.',
+                    icon: 'error',
+                    width: '300px',
+                    padding: '1rem'
+                });
                 throw e;
             }
+            
             if (!resp.error) {
-                mostrarAlerta('Socio eliminado correctamente', 'success');
+                console.log('✅ ELIMINAR SOCIO - Eliminación exitosa');
+                Swal.fire({
+                    title: '¡Eliminado!',
+                    text: `Socio eliminado: ${nombre}`,
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false,
+                    width: '300px',
+                    padding: '1rem'
+                });
                 cargarSocios();
             } else {
-                let msg = extraerMensajeRaiserror(resp);
-                const msgNorm = normalizarMensaje(msg);
-                if (mensajesTriggers[msgNorm]) {
-                    mostrarAlerta(mensajesTriggers[msgNorm], 'danger');
-                } else {
-                    mostrarAlerta(msg, 'danger');
+                console.error('❌ ELIMINAR SOCIO - Error en respuesta:', resp);
+                console.log('🔍 ELIMINAR SOCIO - Error completo:', JSON.stringify(resp, null, 2));
+                
+                // Analizar errores ODBC específicos
+                if (resp.odbcErrors && Array.isArray(resp.odbcErrors)) {
+                    console.log('🔍 ELIMINAR SOCIO - Errores ODBC encontrados:', resp.odbcErrors.length);
+                    resp.odbcErrors.forEach((odbcError, index) => {
+                        console.log(`🔍 ELIMINAR SOCIO - ODBC Error ${index + 1}:`, odbcError);
+                        console.log(`  - State: ${odbcError.state}`);
+                        console.log(`  - Code: ${odbcError.code}`);
+                        console.log(`  - Message: ${odbcError.message}`);
+                    });
                 }
+                
+                let msg = extraerMensajeRaiserror(resp);
+                console.log('🔍 ELIMINAR SOCIO - Mensaje extraído:', msg);
+                
+                const msgNorm = normalizarMensaje(msg);
+                console.log('🔍 ELIMINAR SOCIO - Mensaje normalizado:', msgNorm);
+                
+                // Lógica inteligente para detectar errores de clave foránea de sanciones
+                let mensajeFinal = '';
+                if (msgNorm.includes('fk_sancione_reference_socios') || 
+                    (msgNorm.includes('primary key') && msgNorm.includes('socios') && msgNorm.includes('sanciones'))) {
+                    mensajeFinal = 'No se puede eliminar el socio porque tiene sanciones asociadas. Debe eliminar primero todas las sanciones del socio.';
+                    console.log('🔍 ELIMINAR SOCIO - Detectado error de sanciones, usando mensaje personalizado');
+                } else if (mensajesTriggers[msgNorm]) {
+                    mensajeFinal = mensajesTriggers[msgNorm];
+                    console.log('🔍 ELIMINAR SOCIO - Usando mensaje personalizado del mapeo:', mensajeFinal);
+                } else {
+                    mensajeFinal = msg;
+                    console.log('🔍 ELIMINAR SOCIO - Usando mensaje original:', msg);
+                }
+                
+                Swal.fire({
+                    title: 'Error',
+                    text: mensajeFinal,
+                    icon: 'error',
+                    width: '300px',
+                    padding: '1rem'
+                });
             }
         } catch (error) {
-            mostrarAlerta('Error al eliminar socio.', 'danger');
+            console.error('❌ ELIMINAR SOCIO - Error general:', error);
+            console.log('🔍 ELIMINAR SOCIO - Error stack:', error.stack);
+            Swal.fire({
+                title: 'Error',
+                text: 'Error al eliminar socio.',
+                icon: 'error',
+                width: '300px',
+                padding: '1rem'
+            });
         }
     }
 

@@ -65,6 +65,9 @@ app.get('/donantes', (req, res) => {
 app.get('/instituciones', (req, res) => {
     res.sendFile(path.join(__dirname, 'frontend/views/instituciones.html'));
 });
+app.get('/bibliotecarios', (req, res) => {
+    res.sendFile(path.join(__dirname, 'frontend/views/bibliotecarios.html'));
+});
 app.get('/estadisticas', (req, res) => {
     res.sendFile(path.join(__dirname, 'frontend/views/estadisticas.html'));
 });

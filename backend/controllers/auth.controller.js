@@ -28,13 +28,19 @@ exports.login = async (req, res) => {
 
         const token = jwt.sign(
             {
-                id: bibliotecario.id,
+                id: bibliotecario.BIBLIOTECARIO_ID || bibliotecario.id,
                 usuario: bibliotecario.USUARIO,
-                rol: bibliotecario.privilegios
+                rol: bibliotecario.PRIVILEGIOS || bibliotecario.privilegios
             },
             process.env.JWT_SECRET || 'secreto',
             { expiresIn: '2h' }
         );
+
+        console.log('🔍 Token generado para bibliotecario:', {
+            id: bibliotecario.BIBLIOTECARIO_ID || bibliotecario.id,
+            usuario: bibliotecario.USUARIO,
+            rol: bibliotecario.PRIVILEGIOS || bibliotecario.privilegios
+        });
 
         res.json({ token });
 

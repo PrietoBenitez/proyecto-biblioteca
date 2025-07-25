@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    tabla.querySelector('tbody').addEventListener('click', function(e) {
+    tabla.querySelector('tbody').addEventListener('click', async function(e) {
         if (e.target.classList.contains('editar')) {
             const fila = e.target.closest('tr');
             institucionIdEdit = fila.dataset.id;
@@ -66,8 +66,35 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (e.target.classList.contains('eliminar')) {
             const fila = e.target.closest('tr');
             const id = fila.dataset.id;
-            if (confirm('¿Seguro que deseas eliminar esta institución?')) {
-                eliminarInstitucion(id);
+            
+            // Obtener información de la institución desde la fila de la tabla
+            const nombre = fila.querySelector('.nombre')?.textContent?.trim() || 'Institución desconocida';
+            
+            let titulo = '¿Eliminar institución?';
+            let mensaje = `<strong>${nombre}</strong>`;
+            
+            const result = await Swal.fire({
+                title: titulo,
+                html: mensaje,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Eliminar',
+                cancelButtonText: 'Cancelar',
+                reverseButtons: true,
+                focusCancel: true,
+                width: '350px',
+                padding: '1rem',
+                customClass: {
+                    popup: 'swal2-small',
+                    title: 'swal2-title-small',
+                    content: 'swal2-content-small'
+                }
+            });
+            
+            if (result.isConfirmed) {
+                eliminarInstitucion(id, nombre);
             }
         }
     });
@@ -111,13 +138,29 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    async function eliminarInstitucion(id) {
+    async function eliminarInstitucion(id, nombre = 'Institución') {
         try {
             await fetch(`/api/instituciones/${id}`, { method: 'DELETE' });
-            mostrarAlerta('Institución eliminada correctamente');
+            
+            Swal.fire({
+                title: '¡Eliminado!',
+                text: `Institución eliminada: ${nombre}`,
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false,
+                width: '300px',
+                padding: '1rem'
+            });
+            
             cargarInstituciones();
         } catch {
-            mostrarAlerta('Error al eliminar la institución', 'danger');
+            Swal.fire({
+                title: 'Error',
+                text: 'Error al eliminar la institución',
+                icon: 'error',
+                width: '300px',
+                padding: '1rem'
+            });
         }
     }
 

@@ -411,7 +411,9 @@ body[data-theme="dark"] .table-light {
     align-items: center;
     list-style: none;
     padding: 0;
-    margin: 1.5rem 0;
+    margin: 0.5rem 0 0.2rem 0;
+    position: relative;
+    top: -27px;
 }
 
 .pagination li {
@@ -463,9 +465,9 @@ body[data-theme="dark"] .pagination .page-item.active .page-link {
 body[data-theme="dark"] .materiales-main-container {
     background-color: #181b20 !important;
     color: #fff !important;
-    border-radius: 18px;
-    box-shadow: 0 2px 24px rgba(0,0,0,0.45);
-    border: 1.5px solid #23272f;
+    border-radius: 18px !important;
+    box-shadow: 0 2px 24px rgba(0,0,0,0.45) !important;
+    border: none !important;
 }
 body[data-theme="dark"] .materiales-main-container table,
 body[data-theme="dark"] .materiales-main-container thead,
@@ -514,21 +516,24 @@ body[data-theme="dark"] .materiales-main-container table tr:last-child {
 }
 
 .materiales-main-container {
-    background-color: var(--white);
-    color: var(--text-color);
-    border-radius: 18px;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.13);
-    border: 1.5px solid #e0e0e0;
-    max-width: 98vw;
-    margin-top: 2.5rem;
-    padding: 2.5rem 2rem 2rem 2rem;
-    transition: none;
+    background-color: var(--white) !important;
+    color: var(--text-color) !important;
+    border-radius: 18px !important;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.13) !important;
+    border: none !important;
+    max-width: 98vw !important;
+    margin-top: 2.5rem !important;
+    padding: 2.5rem 2rem 2rem 2rem !important;
+    transition: none !important;
+    height: 500px; /* altura fija */
+    min-height: 1120px; /* altura mínima */
+    max-height: 800px; /* altura máxima */
 }
 
 .materiales-main-container:focus-within,
 .materiales-main-container:hover {
-    box-shadow: 0 4px 24px rgba(0,0,0,0.13);
-    border-color: #e0e0e0;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.13) !important;
+    border: none !important;
 }
 
 /* Badges dark mode solo colores esenciales */
@@ -619,4 +624,39 @@ body[data-theme="dark"] .btn-primary:focus {
         flex-direction: column;
         gap: 0.5rem;
     }
+}
+
+/* Estilos personalizados para SweetAlert2 más pequeño */
+.swal2-small {
+    font-size: 0.9rem;
+}
+
+.swal2-small .swal2-title {
+    font-size: 1.1rem !important;
+    margin: 0 0 0.5rem 0 !important;
+}
+
+.swal2-small .swal2-content {
+    font-size: 0.85rem !important;
+    margin: 0.5rem 0 !important;
+}
+
+.swal2-small .swal2-actions {
+    margin: 1rem 0 0 0 !important;
+}
+
+.swal2-small .swal2-styled {
+    padding: 0.4rem 1rem !important;
+    font-size: 0.85rem !important;
+}
+
+.swal2-small .swal2-icon {
+    width: 50px !important;
+    height: 50px !important;
+    margin: 0.5rem auto !important;
+}
+
+.swal2-small .swal2-icon.swal2-warning {
+    border-color: #f8bb86 !important;
+    color: #f8bb86 !important;
 }

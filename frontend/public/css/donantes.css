@@ -456,3 +456,38 @@ body[data-theme="dark"] .btn-primary:focus {
         padding: 1rem 0.2rem 1rem 0.2rem;
     }
 }
+
+/* Estilos personalizados para SweetAlert2 más pequeño */
+.swal2-small {
+    font-size: 0.9rem;
+}
+
+.swal2-small .swal2-title {
+    font-size: 1.1rem !important;
+    margin: 0 0 0.5rem 0 !important;
+}
+
+.swal2-small .swal2-content {
+    font-size: 0.85rem !important;
+    margin: 0.5rem 0 !important;
+}
+
+.swal2-small .swal2-actions {
+    margin: 1rem 0 0 0 !important;
+}
+
+.swal2-small .swal2-styled {
+    padding: 0.4rem 1rem !important;
+    font-size: 0.85rem !important;
+}
+
+.swal2-small .swal2-icon {
+    width: 50px !important;
+    height: 50px !important;
+    margin: 0.5rem auto !important;
+}
+
+.swal2-small .swal2-icon.swal2-warning {
+    border-color: #f8bb86 !important;
+    color: #f8bb86 !important;
+}

@@ -173,16 +173,26 @@ document.addEventListener('DOMContentLoaded', function() {
             materialData[key] = value;
         }
         try {
+            const token = localStorage.getItem('token');
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            
             const response = await fetch(url, {
                 method: method,
-                headers: { 'Content-Type': 'application/json' },
+                headers: headers,
                 body: JSON.stringify(materialData)
             });
-            if (!response.ok) throw new Error(await response.text());
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || errorData.message || 'Error desconocido');
+            }
             mostrarAlerta(`Material ${materialId ? 'actualizado' : 'creado'} correctamente`, 'success');
             modalMaterial.hide();
             cargarMateriales();
         } catch (error) {
+            console.error('Error en operación:', error);
             mostrarAlerta(error.message, 'danger');
         }
     });
@@ -300,23 +310,78 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Eliminar material
     async function eliminarMaterial(e) {
-        if (!confirm('¿Estás seguro de eliminar este material?')) return;
-
         const materialId = e.target.closest('button').dataset.id;
+        const fila = e.target.closest('tr');
+        
+        // Obtener información del material desde la fila de la tabla
+        const celdas = fila.querySelectorAll('td');
+        const nombre = celdas[0]?.textContent?.trim() || 'Material desconocido';
+        const categoria = celdas[1]?.textContent?.trim() || 'Sin categoría';
+        const ubicacion = celdas[5]?.textContent?.trim() || 'Sin ubicación';
+        
+        let titulo = '¿Eliminar material?';
+        let mensaje = `<strong>${nombre}</strong><br><small class="text-muted">${categoria} • ${ubicacion}</small>`;
+        
+        const result = await Swal.fire({
+            title: titulo,
+            html: mensaje,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Eliminar',
+            cancelButtonText: 'Cancelar',
+            reverseButtons: true,
+            focusCancel: true,
+            width: '350px',
+            padding: '1rem',
+            customClass: {
+                popup: 'swal2-small',
+                title: 'swal2-title-small',
+                content: 'swal2-content-small'
+            }
+        });
+        
+        if (!result.isConfirmed) return;
 
         try {
+            const token = localStorage.getItem('token');
+            const headers = {};
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            
             const response = await fetch(`/api/materiales/${materialId}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: headers
             });
 
-            if (!response.ok) throw new Error(await response.text());
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || errorData.message || 'Error al eliminar material');
+            }
 
-            mostrarAlerta('Material eliminado correctamente', 'success');
+            Swal.fire({
+                title: '¡Eliminado!',
+                text: `Material eliminado: ${nombre}`,
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false,
+                width: '300px',
+                padding: '1rem'
+            });
+            
             cargarMateriales();
 
         } catch (error) {
             console.error('Error al eliminar material:', error);
-            mostrarAlerta('Error al eliminar material', 'danger');
+            Swal.fire({
+                title: 'Error',
+                text: error.message,
+                icon: 'error',
+                width: '300px',
+                padding: '1rem'
+            });
         }
     }
 

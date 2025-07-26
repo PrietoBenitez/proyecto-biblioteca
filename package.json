@@ -1,15 +1,24 @@
 {
   "name": "proyecto-biblioteca",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "Sistema de gestión bibliotecaria con autenticación JWT y base de datos SQL Anywhere",
+  "main": "app.js",
   "scripts": {
     "start": "node app.js",
+    "dev": "nodemon app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "biblioteca",
+    "gestion",
+    "nodejs",
+    "express",
+    "sql-anywhere",
+    "jwt",
+    "odbc"
+  ],
+  "author": "Sistema BiblioTech",
   "license": "ISC",
-  "description": "",
   "dependencies": {
     "bcrypt": "^6.0.0",
     "body-parser": "^2.2.0",
@@ -21,5 +30,12 @@
     "morgan": "^1.10.0",
     "odbc": "^2.4.9",
     "path": "^0.12.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
   }
 }

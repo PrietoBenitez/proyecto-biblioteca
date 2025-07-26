@@ -1,35 +1,97 @@
+
+//  * =========================================
+//  * CONTROLADOR DE SOCIOS - GESTLIB
+//  * =========================================
+
+
 const { getConnection } = require('../config/db');
 const sociosModel = require('../models/socios.model');
+const logger = require('../utils/logger');
+const { validateSocio, sendValidationError } = require('../utils/validation');
 
-
-// Obtener todos los socios
+// ==========================================
+// 1. OBTENER TODOS LOS SOCIOS
+// ==========================================
+/**
+ * Obtiene la lista completa de socios
+ * @param {Object} req - Request object
+ * @param {Object} res - Response object
+ */
 exports.getAllSocios = async (req, res) => {
+    logger.crud('socios', 'READ_ALL', null, 'Iniciando consulta de todos los socios');
+    
     try {
         const socios = await sociosModel.getAllSocios();
+        
+        logger.crud('socios', 'READ_ALL', null, `Consulta exitosa. Total: ${socios.length} socios`, {
+            totalSocios: socios.length
+        });
+        
         res.json(socios);
     } catch (error) {
+        logger.crudError('socios', 'READ_ALL', null, error);
         res.status(500).json({ error: error.message });
     }
 };
 
-// Obtener un socio por ID
+// ==========================================
+// 2. OBTENER SOCIO POR ID
+// ==========================================
+/**
+ * Obtiene un socio específico por su ID
+ * @param {Object} req - Request object
+ * @param {Object} res - Response object
+ */
 exports.getSocioById = async (req, res) => {
     const { id } = req.params;
+    
+    logger.crud('socios', 'READ_BY_ID', id, 'Iniciando búsqueda de socio por ID');
 
     try {
         const socio = await sociosModel.getSocioById(id);
+        
         if (!socio) {
+            logger.warn('SOCIOS', `READ_BY_ID ID:${id}`, 'Socio no encontrado en base de datos');
             return res.status(404).json({ message: 'Socio no encontrado' });
         }
+        
+        logger.crud('socios', 'READ_BY_ID', id, `Socio encontrado: ${socio.NOMBRE} ${socio.APELLIDO}`, {
+            nombre: socio.NOMBRE,
+            apellido: socio.APELLIDO,
+            cedula: socio.CEDULA
+        });
+        
         res.json(socio);
     } catch (error) {
+        logger.crudError('socios', 'READ_BY_ID', id, error);
         res.status(500).json({ error: error.message });
     }
 };
 
-// Crear un nuevo socio
+// ==========================================
+// 3. CREAR NUEVO SOCIO
+// ==========================================
+/**
+ * Crea un nuevo socio en el sistema
+ * @param {Object} req - Request object con datos del socio
+ * @param {Object} res - Response object
+ */
 exports.createSocio = async (req, res) => {
     const socio = req.body;
+    
+    logger.crud('socios', 'CREATE', null, 'Iniciando creación de nuevo socio', {
+        nombre: socio.NOMBRE,
+        apellido: socio.APELLIDO,
+        cedula: socio.CEDULA
+    });
+
+    // ==========================================
+    // VALIDACIÓN CON HELPER REUTILIZABLE
+    // ==========================================
+    const validation = validateSocio(socio);
+    if (!validation.isValid) {
+        return sendValidationError(res, validation.errors, 'Socio');
+    }
 
     // Solo los campos válidos según la base de datos
     const {
@@ -46,12 +108,6 @@ exports.createSocio = async (req, res) => {
         INSTITUCION_ID
     } = socio;
 
-    // Validación de campos obligatorios según la tabla SOCIOS
-    if (!NOMBRE || !APELLIDO || !CEDULA || !FECHA_NACIMIENTO) {
-        return res.status(400).json({ error: 'Faltan campos obligatorios: NOMBRE, APELLIDO, CEDULA, FECHA_NACIMIENTO' });
-    }
-
-    // FECHA_INSCRIPCION puede ser null, la base de datos lo pone por defecto
     try {
         await sociosModel.createSocio({
             NOMBRE,
@@ -66,16 +122,47 @@ exports.createSocio = async (req, res) => {
             PROFESION_ID: PROFESION_ID || null,
             INSTITUCION_ID: INSTITUCION_ID || null
         });
+        
+        logger.crud('socios', 'CREATE', null, `Socio creado exitosamente: ${NOMBRE} ${APELLIDO}`, {
+            nombre: NOMBRE,
+            apellido: APELLIDO,
+            cedula: CEDULA
+        });
+        
         res.status(201).json({ message: 'Socio creado exitosamente' });
     } catch (error) {
+        logger.crudError('socios', 'CREATE', null, error, {
+            datosRecibidos: { NOMBRE, APELLIDO, CEDULA }
+        });
         res.status(500).json({ error: error.message });
     }
 };
 
-// Actualizar un socio existente
+// ==========================================
+// 4. ACTUALIZAR SOCIO EXISTENTE
+// ==========================================
+/**
+ * Actualiza los datos de un socio existente
+ * @param {Object} req - Request object con ID y datos del socio
+ * @param {Object} res - Response object
+ */
 exports.updateSocio = async (req, res) => {
     const { id } = req.params;
     const socio = req.body;
+    
+    logger.crud('socios', 'UPDATE', id, 'Iniciando actualización de socio', {
+        nombre: socio.NOMBRE,
+        apellido: socio.APELLIDO,
+        cedula: socio.CEDULA
+    });
+
+    // ==========================================
+    // VALIDACIÓN CON HELPER REUTILIZABLE
+    // ==========================================
+    const validation = validateSocio(socio);
+    if (!validation.isValid) {
+        return sendValidationError(res, validation.errors, 'Socio');
+    }
 
     // Solo los campos válidos según la base de datos
     const {
@@ -91,10 +178,6 @@ exports.updateSocio = async (req, res) => {
         PROFESION_ID,
         INSTITUCION_ID
     } = socio;
-
-    if (!NOMBRE || !APELLIDO || !CEDULA || !FECHA_NACIMIENTO) {
-        return res.status(400).json({ error: 'Faltan campos obligatorios: NOMBRE, APELLIDO, CEDULA, FECHA_NACIMIENTO' });
-    }
 
     try {
         const result = await sociosModel.updateSocio(id, {
@@ -112,60 +195,72 @@ exports.updateSocio = async (req, res) => {
         });
 
         if (!result || result.affectedRows === 0 || result.count === 0) {
+            logger.warn('SOCIOS', `UPDATE ID:${id}`, 'Socio no encontrado para actualizar');
             return res.status(404).json({ message: 'Socio no encontrado' });
         }
 
+        logger.crud('socios', 'UPDATE', id, `Socio actualizado exitosamente: ${NOMBRE} ${APELLIDO}`, {
+            nombre: NOMBRE,
+            apellido: APELLIDO,
+            cedula: CEDULA
+        });
+
         res.json({ message: 'Socio actualizado exitosamente' });
     } catch (error) {
+        logger.crudError('socios', 'UPDATE', id, error, {
+            datosRecibidos: { NOMBRE, APELLIDO, CEDULA }
+        });
         res.status(500).json({ error: error.message });
     }
 };
 
-// Eliminar un socio
+// ==========================================
+// 5. ELIMINAR SOCIO
+// ==========================================
+/**
+ * Elimina un socio del sistema
+ * @param {Object} req - Request object con ID del socio
+ * @param {Object} res - Response object
+ */
 exports.deleteSocio = async (req, res) => {
     const { id } = req.params;
 
-    console.log('🗑️ BACKEND DELETE SOCIO - Iniciando eliminación ID:', id);
+    logger.crud('socios', 'DELETE', id, 'Iniciando eliminación de socio');
 
     try {
         const result = await sociosModel.deleteSocio(id);
-        console.log('🗑️ BACKEND DELETE SOCIO - Resultado del modelo:', result);
+        
+        logger.debug('SOCIOS', `DELETE ID:${id}`, 'Resultado del modelo', {
+            affectedRows: result?.affectedRows || result?.count || 0
+        });
 
         if (!result || result.affectedRows === 0 || result.count === 0) {
-            console.log('❌ BACKEND DELETE SOCIO - Socio no encontrado o no eliminado');
+            logger.warn('SOCIOS', `DELETE ID:${id}`, 'Socio no encontrado o no eliminado');
             return res.status(404).json({ message: 'Socio no encontrado' });
         }
 
-        console.log('✅ BACKEND DELETE SOCIO - Eliminación exitosa');
+        logger.crud('socios', 'DELETE', id, 'Socio eliminado exitosamente');
         res.json({ message: 'Socio eliminado exitosamente' });
     } catch (error) {
-        console.error('❌ BACKEND DELETE SOCIO - Error capturado:', error);
-        console.log('🔍 BACKEND DELETE SOCIO - Error completo:', JSON.stringify(error, null, 2));
-        console.log('🔍 BACKEND DELETE SOCIO - Error message:', error.message);
-        console.log('🔍 BACKEND DELETE SOCIO - Error code:', error.code);
-        console.log('🔍 BACKEND DELETE SOCIO - Error state:', error.state);
+        logger.crudError('socios', 'DELETE', id, error);
         
-        // Verificar si hay errores ODBC específicos
+        // Verificar si hay errores ODBC específicos para información detallada
         if (error.odbcErrors && Array.isArray(error.odbcErrors)) {
-            console.log('🔍 BACKEND DELETE SOCIO - ODBC Errors encontrados:', error.odbcErrors.length);
-            error.odbcErrors.forEach((odbcError, index) => {
-                console.log(`🔍 BACKEND DELETE SOCIO - ODBC Error ${index + 1}:`, odbcError);
-                console.log(`  - State: ${odbcError.state}`);
-                console.log(`  - Code: ${odbcError.code}`);
-                console.log(`  - Message: ${odbcError.message}`);
+            logger.error('DATABASE', 'ODBC_ERRORS', `Errores ODBC en DELETE socio ID:${id}`, {
+                odbcErrorsCount: error.odbcErrors.length,
+                odbcErrors: error.odbcErrors
             });
             
             // Devolver información detallada de errores ODBC
-            res.status(500).json({ 
+            return res.status(500).json({ 
                 error: error.message,
                 odbcErrors: error.odbcErrors,
                 details: 'Error ODBC detallado disponible en logs del servidor'
             });
-        } else {
-            // Si hay sanciones activas, el trigger de la DB impedirá el borrado y enviará un mensaje de error.
-            // Mostramos el mensaje del trigger.
-            res.status(500).json({ error: error.message });
         }
+        
+        // Si hay sanciones activas, el trigger de la DB impedirá el borrado
+        res.status(500).json({ error: error.message });
     }
 };
 

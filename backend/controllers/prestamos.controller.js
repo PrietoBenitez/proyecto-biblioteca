@@ -1,14 +1,32 @@
-const prestamosModel = require('../models/prestamos.model');
+//  * =========================================
+//  * CONTROLADOR DE PRÉSTAMOS - GESTLIB
+//  * =========================================
 
-// Obtener todos los préstamos
+const prestamosModel = require('../models/prestamos.model');
+const logger = require('../utils/logger');
+const { validatePrestamo, sendValidationError } = require('../utils/validation');
+
+// ==========================================
+// 1. OBTENER TODOS LOS PRÉSTAMOS
+// ==========================================
+/**
+ * Obtiene la lista completa de préstamos
+ * @param {Object} req - Request object
+ * @param {Object} res - Response object
+ */
 exports.getAllPrestamos = async (req, res) => {
-    console.log('📚 GET ALL PRESTAMOS - Obteniendo todos los préstamos');
+    logger.crud('prestamos', 'READ_ALL', null, 'Iniciando consulta de todos los préstamos');
+    
     try {
         const prestamos = await prestamosModel.getAllPrestamos();
-        console.log('✅ GET ALL PRESTAMOS - Préstamos obtenidos:', prestamos.length);
+        
+        logger.crud('prestamos', 'READ_ALL', null, `Consulta exitosa. Total: ${prestamos.length} préstamos`, {
+            totalPrestamos: prestamos.length
+        });
+        
         res.json(prestamos);
     } catch (error) {
-        console.error('❌ GET ALL PRESTAMOS - Error:', error.message);
+        logger.crudError('prestamos', 'READ_ALL', null, error);
         
         // Extraer mensaje amigable del error ODBC/SQL
         let errorMessage = error.message;
@@ -32,21 +50,36 @@ exports.getAllPrestamos = async (req, res) => {
     }
 };
 
-// Obtener préstamo por ID
+// ==========================================
+// 2. OBTENER PRÉSTAMO POR ID
+// ==========================================
+/**
+ * Obtiene un préstamo específico por su ID
+ * @param {Object} req - Request object
+ * @param {Object} res - Response object
+ */
 exports.getPrestamoById = async (req, res) => {
     const { id } = req.params;
-    console.log('📚 GET PRESTAMO BY ID - ID:', id);
+    
+    logger.crud('prestamos', 'READ_BY_ID', id, 'Iniciando búsqueda de préstamo por ID');
     
     try {
         const prestamo = await prestamosModel.getPrestamoById(id);
+        
         if (!prestamo) {
-            console.log('❌ GET PRESTAMO BY ID - Préstamo no encontrado. ID:', id);
+            logger.warn('PRESTAMOS', `READ_BY_ID ID:${id}`, 'Préstamo no encontrado en base de datos');
             return res.status(404).json({ message: 'Préstamo no encontrado' });
         }
-        console.log('✅ GET PRESTAMO BY ID - Préstamo encontrado:', prestamo.PRESTAMO_ID);
+        
+        logger.crud('prestamos', 'READ_BY_ID', id, `Préstamo encontrado`, {
+            prestamoId: prestamo.PRESTAMO_ID,
+            socioId: prestamo.SOCIO_ID,
+            materialId: prestamo.MATERIAL_ID
+        });
+        
         res.json(prestamo);
     } catch (error) {
-        console.error('❌ GET PRESTAMO BY ID - Error:', error.message);
+        logger.crudError('prestamos', 'READ_BY_ID', id, error);
         
         // Extraer mensaje amigable del error ODBC/SQL
         let errorMessage = error.message;
@@ -70,26 +103,54 @@ exports.getPrestamoById = async (req, res) => {
     }
 };
 
-// Crear préstamo
+// ==========================================
+// 3. CREAR NUEVO PRÉSTAMO
+// ==========================================
+/**
+ * Crea un nuevo préstamo en el sistema
+ * @param {Object} req - Request object con datos del préstamo
+ * @param {Object} res - Response object
+ */
 exports.createPrestamo = async (req, res) => {
     const prestamo = req.body;
-    console.log('📚 CREATE PRESTAMO - Datos recibidos:', JSON.stringify(prestamo, null, 2));
-    console.log('📚 CREATE PRESTAMO - Usuario autenticado:', req.user);
+    
+    logger.crud('prestamos', 'CREATE', null, 'Iniciando creación de nuevo préstamo', {
+        socioId: prestamo.SOCIO_ID,
+        materialId: prestamo.MATERIAL_ID,
+        fechaPrestamo: prestamo.FECHA_PRESTAMO,
+        usuario: req.user?.usuario || 'sistema'
+    });
+
+    // ==========================================
+    // VALIDACIÓN CON HELPER REUTILIZABLE
+    // ==========================================
+    const validation = validatePrestamo(prestamo);
+    if (!validation.isValid) {
+        return sendValidationError(res, validation.errors, 'Préstamo');
+    }
     
     try {
         const result = await prestamosModel.createPrestamo(prestamo, req.user);
+        
         if (result.error) {
-            console.log('❌ CREATE PRESTAMO - Error de validación:', result.error);
+            logger.warn('PRESTAMOS', 'CREATE', 'Error de validación del modelo', { error: result.error });
             return res.status(400).json({ error: result.error });
         }
-        console.log('✅ CREATE PRESTAMO - Préstamo creado exitosamente. ID:', result.insertId);
+        
+        logger.crud('prestamos', 'CREATE', null, `Préstamo creado exitosamente`, {
+            prestamoId: result.insertId,
+            socioId: prestamo.SOCIO_ID,
+            materialId: prestamo.MATERIAL_ID
+        });
+        
         res.status(201).json({ 
             message: 'Préstamo creado correctamente',
             prestamoId: result.insertId
         });
     } catch (error) {
-        console.error('❌ CREATE PRESTAMO - Error:', error.message);
-        console.error('❌ CREATE PRESTAMO - Stack trace:', error.stack);
+        logger.crudError('prestamos', 'CREATE', null, error, {
+            datosRecibidos: { SOCIO_ID: prestamo.SOCIO_ID, MATERIAL_ID: prestamo.MATERIAL_ID }
+        });
         
         // Extraer mensaje amigable del error ODBC/SQL
         let errorMessage = error.message;
@@ -113,25 +174,50 @@ exports.createPrestamo = async (req, res) => {
     }
 };
 
-// Actualizar préstamo
+// ==========================================
+// 4. ACTUALIZAR PRÉSTAMO EXISTENTE
+// ==========================================
+/**
+ * Actualiza los datos de un préstamo existente
+ * @param {Object} req - Request object con ID y datos del préstamo
+ * @param {Object} res - Response object
+ */
 exports.updatePrestamo = async (req, res) => {
     const { id } = req.params;
     const prestamo = req.body;
-    console.log('📚 UPDATE PRESTAMO - ID:', id);
-    console.log('📚 UPDATE PRESTAMO - Datos recibidos:', JSON.stringify(prestamo, null, 2));
-    console.log('📚 UPDATE PRESTAMO - Usuario autenticado:', req.user);
+    
+    logger.crud('prestamos', 'UPDATE', id, 'Iniciando actualización de préstamo', {
+        socioId: prestamo.SOCIO_ID,
+        materialId: prestamo.MATERIAL_ID,
+        usuario: req.user?.usuario || 'sistema'
+    });
+
+    // ==========================================
+    // VALIDACIÓN CON HELPER REUTILIZABLE
+    // ==========================================
+    const validation = validatePrestamo(prestamo);
+    if (!validation.isValid) {
+        return sendValidationError(res, validation.errors, 'Préstamo');
+    }
     
     try {
         const result = await prestamosModel.updatePrestamo(id, prestamo);
+        
         if (!result || result.affectedRows === 0) {
-            console.log('❌ UPDATE PRESTAMO - Préstamo no encontrado. ID:', id);
+            logger.warn('PRESTAMOS', `UPDATE ID:${id}`, 'Préstamo no encontrado para actualizar');
             return res.status(404).json({ message: 'Préstamo no encontrado' });
         }
-        console.log('✅ UPDATE PRESTAMO - Préstamo actualizado exitosamente. ID:', id);
+        
+        logger.crud('prestamos', 'UPDATE', id, `Préstamo actualizado exitosamente`, {
+            socioId: prestamo.SOCIO_ID,
+            materialId: prestamo.MATERIAL_ID
+        });
+        
         res.json({ message: 'Préstamo actualizado correctamente' });
     } catch (error) {
-        console.error('❌ UPDATE PRESTAMO - Error:', error.message);
-        console.error('❌ UPDATE PRESTAMO - Stack trace:', error.stack);
+        logger.crudError('prestamos', 'UPDATE', id, error, {
+            datosRecibidos: { SOCIO_ID: prestamo.SOCIO_ID, MATERIAL_ID: prestamo.MATERIAL_ID }
+        });
         
         // Extraer mensaje amigable del error ODBC/SQL
         let errorMessage = error.message;
@@ -155,23 +241,39 @@ exports.updatePrestamo = async (req, res) => {
     }
 };
 
-// Eliminar préstamo
+// ==========================================
+// 5. ELIMINAR PRÉSTAMO
+// ==========================================
+/**
+ * Elimina un préstamo del sistema
+ * @param {Object} req - Request object con ID del préstamo
+ * @param {Object} res - Response object
+ */
 exports.deletePrestamo = async (req, res) => {
     const { id } = req.params;
-    console.log('📚 DELETE PRESTAMO - ID:', id);
-    console.log('📚 DELETE PRESTAMO - Usuario autenticado:', req.user);
+
+    logger.crud('prestamos', 'DELETE', id, 'Iniciando eliminación de préstamo');
     
     try {
         const result = await prestamosModel.deletePrestamo(id);
+        
         if (!result || result.affectedRows === 0) {
-            console.log('❌ DELETE PRESTAMO - Préstamo no encontrado. ID:', id);
+            logger.warn('PRESTAMOS', `DELETE ID:${id}`, 'Préstamo no encontrado o no eliminado');
             return res.status(404).json({ message: 'Préstamo no encontrado' });
         }
-        console.log('✅ DELETE PRESTAMO - Préstamo eliminado exitosamente. ID:', id);
+        
+        logger.crud('prestamos', 'DELETE', id, 'Préstamo eliminado exitosamente');
         res.json({ message: 'Préstamo eliminado correctamente' });
     } catch (error) {
-        console.error('❌ DELETE PRESTAMO - Error:', error.message);
-        console.error('❌ DELETE PRESTAMO - Stack trace:', error.stack);
+        logger.crudError('prestamos', 'DELETE', id, error);
+        
+        // Verificar si hay errores ODBC específicos para información detallada
+        if (error.odbcErrors && Array.isArray(error.odbcErrors)) {
+            logger.error('DATABASE', 'ODBC_ERRORS', `Errores ODBC en DELETE préstamo ID:${id}`, {
+                odbcErrorsCount: error.odbcErrors.length,
+                odbcErrors: error.odbcErrors
+            });
+        }
         
         // Extraer mensaje amigable del error ODBC/SQL
         let errorMessage = error.message;

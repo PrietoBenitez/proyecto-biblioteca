@@ -491,7 +491,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const msgNorm = normalizarMensaje(msg);
                 console.log('🔍 ELIMINAR SOCIO - Mensaje normalizado:', msgNorm);
                 
-                // Lógica inteligente para detectar errores de clave foránea de sanciones
+                // Lógica para detectar errores de clave foránea de sanciones
                 let mensajeFinal = '';
                 if (msgNorm.includes('fk_sancione_reference_socios') || 
                     (msgNorm.includes('primary key') && msgNorm.includes('socios') && msgNorm.includes('sanciones'))) {

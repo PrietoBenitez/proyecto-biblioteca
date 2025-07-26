@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const sociosController = require('../controllers/socios.controller');
 
-// Endpoints para selects de formulario de socios (¡deben ir antes de las rutas dinámicas!)
+// Endpoints para selects de formulario de socios 
 router.get('/nacionalidades', sociosController.getNacionalidades);
 router.get('/educaciones', sociosController.getEducaciones);
 router.get('/profesiones', sociosController.getProfesiones);

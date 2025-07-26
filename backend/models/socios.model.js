@@ -129,7 +129,7 @@ async function deleteSocio(id) {
     }
 }
 
-// Obtener socios filtrados con paginación y conteo total (JOINs con nombres reales de tablas)
+// Obtener socios filtrados con paginación y conteo total 
 async function getSociosFiltrados(texto, estado, page = 1, limit = 10) {
     let baseQuery = `FROM Socios 
         LEFT JOIN PAISES ON Socios.NACIONALIDAD = PAISES.NACIONALIDAD
@@ -227,7 +227,7 @@ async function getSancionesActivasBySocio(socioId) {
     return [];
 }
 
-// AGREGADO: Agregar una sanción a un socio (el trigger de la base de datos maneja el estado del socio)
+// Agregar una sanción a un socio (el trigger de la base de datos maneja el estado del socio)
 async function agregarSancionASocio({ socio_id, motivo, fecha_inicio, fecha_fin }) {
     const db = await getConnection();
     await db.query(

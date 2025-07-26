@@ -1,7 +1,36 @@
-// backend/models/bibliotecarios.model.js
-// Modelo de acceso a bibliotecarios usando Sybase y ODBC
+/**
+ * =========================================
+ * MODELO DE BIBLIOTECARIOS - BIBLIOTECH
+ * =========================================
+ * 
+ * Este modelo maneja todas las operaciones CRUD
+ * para la tabla bibliotecarios en la base de datos.
+ * 
+ * Funcionalidades:
+ * - CRUD completo para bibliotecarios
+ * - Encriptación de contraseñas con bcrypt
+ * - Búsqueda por usuario para autenticación
+ * - Validaciones de datos
+ * 
+ * Autor: Sistema BiblioTech
+ * =========================================
+ */
+
+// ==========================================
+// 1. IMPORTAR CONFIGURACIÓN DE BASE DE DATOS
+// ==========================================
 const { getConnection } = require('../config/db');
 
+// ==========================================
+// 2. FUNCIÓN PARA AUTENTICACIÓN
+// ==========================================
+/**
+ * Busca un bibliotecario por nombre de usuario
+ * Utilizada principalmente para el proceso de login
+ * 
+ * @param {string} usuario - Nombre de usuario del bibliotecario
+ * @returns {Object|null} Datos del bibliotecario o null si no existe
+ */
 async function findByUsuario(usuario) {
     const conn = await getConnection();
     try {
@@ -12,15 +41,31 @@ async function findByUsuario(usuario) {
     }
 }
 
-// Crear bibliotecario
+// ==========================================
+// 3. CREAR NUEVO BIBLIOTECARIO
+// ==========================================
+/**
+ * Crea un nuevo bibliotecario con contraseña encriptada
+ * 
+ * @param {Object} data - Datos del bibliotecario
+ * @param {string} data.usuario - Nombre de usuario único
+ * @param {string} data.privilegios - Nivel de privilegios (N/Y/S)
+ * @param {string} data.nombre - Nombre del bibliotecario
+ * @param {string} data.contrasena - Contraseña en texto plano
+ * @param {string} data.cedula - Cédula de identidad
+ * @param {string} data.apellido - Apellido del bibliotecario
+ * @returns {Object} Resultado de la inserción
+ */
 async function createBibliotecario({ usuario, privilegios, nombre, contrasena, cedula, apellido }) {
     const conn = await getConnection();
     try {
-        // Hashear la contraseña antes de guardar
+        // Encriptar contraseña con bcrypt antes de guardar
         const bcrypt = require('bcrypt');
         const hash = await bcrypt.hash(contrasena, 10);
+        
         const result = await conn.query(
-            `INSERT INTO bibliotecarios (usuario, privilegios, nombre, contrasena, cedula, apellido) VALUES (?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO bibliotecarios (usuario, privilegios, nombre, contrasena, cedula, apellido) 
+             VALUES (?, ?, ?, ?, ?, ?)`,
             [usuario, privilegios, nombre, hash, cedula, apellido]
         );
         return result;
@@ -29,7 +74,15 @@ async function createBibliotecario({ usuario, privilegios, nombre, contrasena, c
     }
 }
 
-// Obtener todos los bibliotecarios
+// ==========================================
+// 4. OBTENER TODOS LOS BIBLIOTECARIOS
+// ==========================================
+/**
+ * Obtiene la lista completa de bibliotecarios
+ * Excluye la contraseña por seguridad
+ * 
+ * @returns {Array} Lista de bibliotecarios ordenada por apellido
+ */
 async function getAllBibliotecarios() {
     const db = await getConnection();
     const result = await db.query(`

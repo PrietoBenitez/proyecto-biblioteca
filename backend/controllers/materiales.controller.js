@@ -1,26 +1,66 @@
+//  * =========================================
+//  * CONTROLADOR DE MATERIALES - GESTLIB
+//  * =========================================
+
 const { format } = require('path');
 const { getConnection } = require('../config/db');
 const materialesModel = require('../models/materiales.model');
+const logger = require('../utils/logger');
+const { validateMaterial, sendValidationError } = require('../utils/validation');
 
 
-// Obtener todos los materiales
+// ==========================================
+// 1. OBTENER TODOS LOS MATERIALES
+// ==========================================
+/**
+ * Obtiene la lista completa de materiales
+ * @param {Object} req - Request object
+ * @param {Object} res - Response object
+ */
 exports.getAllMateriales = async (req, res) => {
+    logger.crud('materiales', 'READ_ALL', null, 'Iniciando consulta de todos los materiales');
+    
     try {
         const materiales = await materialesModel.getAllMateriales();
+        
+        logger.crud('materiales', 'READ_ALL', null, `Consulta exitosa. Total: ${materiales.length} materiales`, {
+            totalMateriales: materiales.length
+        });
+        
         res.json(materiales);
     } catch (error) {
+        logger.crudError('materiales', 'READ_ALL', null, error);
         res.status(500).json({ error: error.message });
     }
 };
 
-// Obtener un material por ID
+// ==========================================
+// 2. OBTENER MATERIAL POR ID
+// ==========================================
+/**
+ * Obtiene un material específico por su ID
+ * @param {Object} req - Request object
+ * @param {Object} res - Response object
+ */
 exports.getMaterialById = async (req, res) => {
     const { id } = req.params;
+    
+    logger.crud('materiales', 'READ_BY_ID', id, 'Iniciando búsqueda de material por ID');
+
     try {
         const material = await materialesModel.getMaterialById(id);
+        
         if (!material) {
+            logger.warn('MATERIALES', `READ_BY_ID ID:${id}`, 'Material no encontrado en base de datos');
             return res.status(404).json({ message: 'Material no encontrado' });
         }
+        
+        logger.crud('materiales', 'READ_BY_ID', id, `Material encontrado: ${material.NOMBRE}`, {
+            nombre: material.NOMBRE,
+            tipo: material.TIPO_MATERIAL,
+            estado: material.DISPONIBILIDAD
+        });
+        
         // Mapear los campos igual que en el listado, incluyendo los descriptivos
         const materialMap = {
             id: material.NUMERO_ID,
@@ -48,42 +88,57 @@ exports.getMaterialById = async (req, res) => {
         };
         res.json(materialMap);
     } catch (error) {
+        logger.crudError('materiales', 'READ_BY_ID', id, error);
         res.status(500).json({ error: error.message });
     }
 };
 
-// Crear un nuevo material
+// ==========================================
+// 3. CREAR NUEVO MATERIAL
+// ==========================================
+/**
+ * Crea un nuevo material en el sistema
+ * @param {Object} req - Request object con datos del material
+ * @param {Object} res - Response object
+ */
 exports.createMaterial = async (req, res) => {
     const material = req.body;
     
-    // Validación de campos obligatorios
-    if (!material.NOMBRE || !material.SUBTIPO_ID || !material.TIPO_MATERIAL) {
-        console.log('❌ Error: Faltan campos obligatorios en material');
-        return res.status(400).json({ error: 'Faltan campos obligatorios' });
+    logger.crud('materiales', 'CREATE', null, 'Iniciando creación de nuevo material', {
+        nombre: material.NOMBRE,
+        tipo: material.TIPO_MATERIAL,
+        subtipo: material.SUBTIPO_ID
+    });
+
+    // ==========================================
+    // VALIDACIÓN CON HELPER REUTILIZABLE
+    // ==========================================
+    const validation = validateMaterial(material);
+    if (!validation.isValid) {
+        return sendValidationError(res, validation.errors, 'Material');
     }
-    
+
     try {
         // Insertar material
-        const db = require('../models/materiales.model');
-        const insertResult = await db.createMaterial(material);
+        const insertResult = await materialesModel.createMaterial(material);
         
         // Obtener el último ID insertado
-        const conn = await require('../config/db').getConnection();
+        const conn = await getConnection();
         const lastIdResult = await conn.query('SELECT MAX(NUMERO_ID) as lastId FROM MATERIALES');
         await conn.close();
         
         const lastId = lastIdResult.rows ? lastIdResult.rows[0].lastId : lastIdResult[0].lastId;
         
         if (!lastId) {
-            console.log('❌ No se pudo obtener el último ID del material creado');
+            logger.warn('MATERIALES', 'CREATE', 'No se pudo obtener el último ID del material creado');
             return res.status(201).json({ message: 'Material creado, pero no se pudo obtener el registro.' });
         }
         
         // Obtener el material recién creado
-        const m = await db.getMaterialById(lastId);
+        const m = await materialesModel.getMaterialById(lastId);
         
         if (!m) {
-            console.log('❌ No se pudo obtener el material recién creado');
+            logger.warn('MATERIALES', 'CREATE', 'No se pudo obtener el material recién creado');
             return res.status(201).json({ message: 'Material creado, pero no se pudo obtener el registro.' });
         }
         // Mapear igual que en el listado
@@ -112,23 +167,46 @@ exports.createMaterial = async (req, res) => {
             condicion: m.CONDICION
         };
         
-        console.log('✅ Material creado exitosamente:', material.NOMBRE);
+        logger.crud('materiales', 'CREATE', null, `Material creado exitosamente: ${material.NOMBRE}`, {
+            nombre: material.NOMBRE,
+            tipo: material.TIPO_MATERIAL,
+            id: lastId
+        });
+        
         res.status(201).json({ message: 'Material creado exitosamente', material: materialMap });
     } catch (error) {
-        console.error('❌ Error al crear material:', error.message);
+        logger.crudError('materiales', 'CREATE', null, error, {
+            datosRecibidos: { NOMBRE: material.NOMBRE, TIPO_MATERIAL: material.TIPO_MATERIAL }
+        });
         res.status(500).json({ error: error.message });
     }
 };
 
-// Actualizar un material existente
+// ==========================================
+// 4. ACTUALIZAR MATERIAL EXISTENTE
+// ==========================================
+/**
+ * Actualiza los datos de un material existente
+ * @param {Object} req - Request object con ID y datos del material
+ * @param {Object} res - Response object
+ */
 exports.updateMaterial = async (req, res) => {
     const { id } = req.params;
     const material = req.body;
     
-    console.log('📝 CONTROLLER UPDATE - ID:', id);
-    console.log('📝 CONTROLLER UPDATE - Estado:', material.DISPONIBILIDAD);
-    console.log('📝 CONTROLLER UPDATE - Usuario autenticado:', req.user);
-    console.log('📝 CONTROLLER UPDATE - Datos completos:', JSON.stringify(material, null, 2));
+    logger.crud('materiales', 'UPDATE', id, 'Iniciando actualización de material', {
+        nombre: material.NOMBRE,
+        tipo: material.TIPO_MATERIAL,
+        estado: material.DISPONIBILIDAD
+    });
+
+    // ==========================================
+    // VALIDACIÓN CON HELPER REUTILIZABLE
+    // ==========================================
+    const validation = validateMaterial(material);
+    if (!validation.isValid) {
+        return sendValidationError(res, validation.errors, 'Material');
+    }
 
     try {
         // Pasar información del bibliotecario autenticado al modelo
@@ -137,12 +215,12 @@ exports.updateMaterial = async (req, res) => {
             usuario: req.user.usuario
         } : { id: 1, usuario: 'dba' }; // Fallback para DBA
         
-        console.log('🔍 CONTROLLER UPDATE - Bibliotecario extraído del token:', bibliotecario);
+        logger.debug('MATERIALES', `UPDATE ID:${id}`, 'Bibliotecario extraído del token', { bibliotecario });
         
         const result = await materialesModel.updateMaterial(id, material, bibliotecario);
 
         if (!result || result.affectedRows === 0 || result.count === 0) {
-            console.log('❌ Material no encontrado o no actualizado. ID:', id);
+            logger.warn('MATERIALES', `UPDATE ID:${id}`, 'Material no encontrado para actualizar');
             return res.status(404).json({ message: 'Material no encontrado' });
         }
 
@@ -177,10 +255,17 @@ exports.updateMaterial = async (req, res) => {
             condicion: m.CONDICION
         };
         
-        console.log('✅ Material actualizado exitosamente. ID:', id, 'Nombre:', m.NOMBRE);
+        logger.crud('materiales', 'UPDATE', id, `Material actualizado exitosamente: ${m.NOMBRE}`, {
+            nombre: m.NOMBRE,
+            tipo: m.TIPO_MATERIAL,
+            estado: m.DISPONIBILIDAD
+        });
+
         res.json({ message: 'Material actualizado exitosamente', material: materialMap });
     } catch (error) {
-        console.error('❌ Error al actualizar material ID:', id, 'Error:', error.message);
+        logger.crudError('materiales', 'UPDATE', id, error, {
+            datosRecibidos: { NOMBRE: material.NOMBRE, TIPO_MATERIAL: material.TIPO_MATERIAL }
+        });
         
         // Extraer mensaje amigable del trigger/RAISERROR
         let errorMessage = error.message;
@@ -206,41 +291,55 @@ exports.updateMaterial = async (req, res) => {
     }
 };
 
-// Eliminar un material
+// ==========================================
+// 5. ELIMINAR MATERIAL
+// ==========================================
+/**
+ * Elimina un material del sistema
+ * @param {Object} req - Request object con ID del material
+ * @param {Object} res - Response object
+ */
 exports.deleteMaterial = async (req, res) => {
     const { id } = req.params;
 
-    console.log('🗑️ DELETE MATERIAL - Iniciando eliminación de material ID:', id);
-    console.log('🗑️ DELETE MATERIAL - Usuario autenticado:', req.user);
+    logger.crud('materiales', 'DELETE', id, 'Iniciando eliminación de material');
 
     try {
         // Obtener información del material antes de eliminarlo para logs
         const materialExistente = await materialesModel.getMaterialById(id);
         if (materialExistente) {
-            console.log('🗑️ DELETE MATERIAL - Material encontrado:', materialExistente.NOMBRE);
+            logger.debug('MATERIALES', `DELETE ID:${id}`, `Material encontrado: ${materialExistente.NOMBRE}`);
         } else {
-            console.log('❌ DELETE MATERIAL - Material no encontrado en base de datos. ID:', id);
+            logger.warn('MATERIALES', `DELETE ID:${id}`, 'Material no encontrado en base de datos');
             return res.status(404).json({ message: 'Material no encontrado' });
         }
 
         const result = await materialesModel.deleteMaterial(id);
-        console.log('🗑️ DELETE MATERIAL - Resultado de eliminación:', result);
+        logger.debug('MATERIALES', `DELETE ID:${id}`, 'Resultado del modelo', {
+            affectedRows: result?.affectedRows || result?.count || 0
+        });
 
         if (!result || result.affectedRows === 0 || result.count === 0) {
-            console.log('❌ DELETE MATERIAL - Material no eliminado. ID:', id);
+            logger.warn('MATERIALES', `DELETE ID:${id}`, 'Material no encontrado o no eliminado');
             return res.status(404).json({ message: 'Material no encontrado' });
         }
 
-        console.log('✅ DELETE MATERIAL - Material eliminado exitosamente. ID:', id, 'Nombre:', materialExistente.NOMBRE);
+        logger.crud('materiales', 'DELETE', id, `Material eliminado exitosamente: ${materialExistente.NOMBRE}`);
         res.json({ message: 'Material eliminado exitosamente' });
     } catch (error) {
-        console.error('❌ DELETE MATERIAL - Error al eliminar material ID:', id, 'Error:', error.message);
-        console.error('❌ DELETE MATERIAL - Stack trace:', error.stack);
+        logger.crudError('materiales', 'DELETE', id, error);
         
-        // Extraer mensaje amigable del error ODBC/SQL
+        // Verificar si hay errores ODBC específicos para información detallada
+        if (error.odbcErrors && Array.isArray(error.odbcErrors)) {
+            logger.error('DATABASE', 'ODBC_ERRORS', `Errores ODBC en DELETE material ID:${id}`, {
+                odbcErrorsCount: error.odbcErrors.length,
+                odbcErrors: error.odbcErrors
+            });
+        }
+        
+        // Extraer mensaje del error ODBC/SQL
         let errorMessage = error.message;
         if (error.odbcErrors && error.odbcErrors.length > 0) {
-            console.error('❌ DELETE MATERIAL - ODBC Errors:', error.odbcErrors);
             const odbcError = error.odbcErrors[0];
             if (odbcError.message) {
                 // Casos específicos de errores de integridad referencial
@@ -316,6 +415,7 @@ exports.getMaterialesFiltrados = async (req, res) => {
         }));
         res.json({ materiales: materialesMap, total, page: pageNum, limit: limitNum });
     } catch (error) {
+        logger.error('MATERIALES', 'GET_FILTRADOS', 'Error en filtro de materiales', { error: error.message });
         res.status(500).json({ error: error.message });
     }
 };
@@ -326,7 +426,7 @@ exports.getCategorias = async (req, res) => {
         const categorias = await materialesModel.getCategorias();
         res.json(categorias);
     } catch (error) {
-        console.error('Error en endpoint /api/materiales/categorias:', error);
+        logger.error('MATERIALES', 'GET_CATEGORIAS', 'Error al obtener categorías', { error: error.message });
         res.status(500).json({ error: error.message, stack: error.stack });
     }
 };
@@ -336,7 +436,7 @@ exports.getSubtipos = async (req, res) => {
         const subtipos = await materialesModel.getSubtipos();
         res.json(subtipos);
     } catch (error) {
-        console.error('Error en endpoint /api/materiales/subtipos:', error);
+        logger.error('MATERIALES', 'GET_SUBTIPOS', 'Error al obtener subtipos', { error: error.message });
         res.status(500).json({ error: error.message, stack: error.stack });
     }
 };
@@ -346,7 +446,7 @@ exports.getPaises = async (req, res) => {
         const paises = await materialesModel.getPaises();
         res.json(paises);
     } catch (error) {
-        console.error('Error en endpoint /api/materiales/paises:', error);
+        logger.error('MATERIALES', 'GET_PAISES', 'Error al obtener países', { error: error.message });
         res.status(500).json({ error: error.message, stack: error.stack });
     }
 };
@@ -356,7 +456,7 @@ exports.getDonantes = async (req, res) => {
         const donantes = await materialesModel.getDonantes();
         res.json(donantes);
     } catch (error) {
-        console.error('Error en endpoint /api/materiales/donantes:', error);
+        logger.error('MATERIALES', 'GET_DONANTES', 'Error al obtener donantes', { error: error.message });
         res.status(500).json({ error: error.message, stack: error.stack });
     }
 };

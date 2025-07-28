@@ -4,7 +4,9 @@ const { getConnection } = require('../config/db');
 async function getAllPrestamos() {
     const db = await getConnection();
     const result = await db.query(`
-        SELECT p.*, 
+        SELECT p.PRESTAMO_ID, p.SOCIO_ID, p.BIBLIOTECARIO_ID, p.NUMERO_ID, 
+            p.TIPO_PRESTAMO, p.FECHA_PRESTAMO, p.LIMITE_DEVOLUCION, p.COMENTARIO,
+            p.DEVOLUCION, p.ESTADO_DEVOLUCION, p.COMENTARIO_ESTADO,
             p.NUMERO_ID AS MATERIAL_ID, 
             s.NOMBRE AS NOMBRE_SOCIO, s.APELLIDO AS APELLIDO_SOCIO,
             m.NOMBRE AS NOMBRE_MATERIAL,
@@ -23,7 +25,9 @@ async function getAllPrestamos() {
 async function getPrestamoById(id) {
     const db = await getConnection();
     const result = await db.query(`
-        SELECT p.*, 
+        SELECT p.PRESTAMO_ID, p.SOCIO_ID, p.BIBLIOTECARIO_ID, p.NUMERO_ID, 
+            p.TIPO_PRESTAMO, p.FECHA_PRESTAMO, p.LIMITE_DEVOLUCION, p.COMENTARIO,
+            p.DEVOLUCION, p.ESTADO_DEVOLUCION, p.COMENTARIO_ESTADO,
             p.NUMERO_ID AS MATERIAL_ID, 
             s.NOMBRE AS NOMBRE_SOCIO, s.APELLIDO AS APELLIDO_SOCIO,
             m.NOMBRE AS NOMBRE_MATERIAL,

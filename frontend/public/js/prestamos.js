@@ -121,8 +121,8 @@ function mostrarPrestamos(prestamos) {
             <td>${formatearTipoPrestamo(prestamo.TIPO_PRESTAMO)}</td>
             <td>${prestamo.FECHA_PRESTAMO ? formatearFechaDMY(prestamo.FECHA_PRESTAMO) : ''}</td>
             <td>${prestamo.LIMITE_DEVOLUCION ? formatearFechaDMY(prestamo.LIMITE_DEVOLUCION) : ''}</td>
-            <td>${prestamo.DEVOLUCION ? formatearFechaDMY(prestamo.DEVOLUCION) : ''}</td>
             <td>${prestamo.COMENTARIO || ''}</td>
+            <td>${prestamo.DEVOLUCION ? formatearFechaDMY(prestamo.DEVOLUCION) : ''}</td>
             <td>${prestamo.COMENTARIO_ESTADO || ''}</td>
             <td>${estadoBadge}</td>
             <td>

@@ -114,6 +114,16 @@ exports.getPrestamoById = async (req, res) => {
 exports.createPrestamo = async (req, res) => {
     const prestamo = req.body;
     
+    console.log('🔍 CONTROLLER CREATE PRESTAMO - Raw body:', JSON.stringify(req.body, null, 2));
+    console.log('🔍 CONTROLLER CREATE PRESTAMO - Prestamo object:', JSON.stringify(prestamo, null, 2));
+    console.log('🔍 CONTROLLER CREATE PRESTAMO - Types:', {
+        SOCIO_ID: typeof prestamo.SOCIO_ID,
+        MATERIAL_ID: typeof prestamo.MATERIAL_ID,
+        NUMERO_ID: typeof prestamo.NUMERO_ID,
+        FECHA_PRESTAMO: typeof prestamo.FECHA_PRESTAMO,
+        LIMITE_DEVOLUCION: typeof prestamo.LIMITE_DEVOLUCION
+    });
+    
     logger.crud('prestamos', 'CREATE', null, 'Iniciando creación de nuevo préstamo', {
         socioId: prestamo.SOCIO_ID,
         materialId: prestamo.MATERIAL_ID,
@@ -122,15 +132,35 @@ exports.createPrestamo = async (req, res) => {
     });
 
     // ==========================================
+    // LIMPIEZA Y NORMALIZACIÓN DE DATOS
+    // ==========================================
+    // Limpiar y normalizar los datos antes de la validación
+    const cleanPrestamo = {
+        SOCIO_ID: prestamo.SOCIO_ID && prestamo.SOCIO_ID !== '' ? parseInt(prestamo.SOCIO_ID) : null,
+        MATERIAL_ID: prestamo.MATERIAL_ID && prestamo.MATERIAL_ID !== '' ? parseInt(prestamo.MATERIAL_ID) : null,
+        NUMERO_ID: prestamo.NUMERO_ID && prestamo.NUMERO_ID !== '' ? parseInt(prestamo.NUMERO_ID) : null,
+        BIBLIOTECARIO_ID: prestamo.BIBLIOTECARIO_ID && prestamo.BIBLIOTECARIO_ID !== '' ? parseInt(prestamo.BIBLIOTECARIO_ID) : null,
+        TIPO_PRESTAMO: prestamo.TIPO_PRESTAMO || 'I',
+        FECHA_PRESTAMO: prestamo.FECHA_PRESTAMO || null,
+        LIMITE_DEVOLUCION: prestamo.LIMITE_DEVOLUCION || null,
+        COMENTARIO: prestamo.COMENTARIO || null,
+        DEVOLUCION: prestamo.DEVOLUCION || null,
+        ESTADO_DEVOLUCION: prestamo.ESTADO_DEVOLUCION || null,
+        COMENTARIO_ESTADO: prestamo.COMENTARIO_ESTADO || null
+    };
+    
+    console.log('🔍 CONTROLLER CREATE PRESTAMO - Clean prestamo:', JSON.stringify(cleanPrestamo, null, 2));
+
+    // ==========================================
     // VALIDACIÓN CON HELPER REUTILIZABLE
     // ==========================================
-    const validation = validatePrestamo(prestamo);
+    const validation = validatePrestamo(cleanPrestamo);
     if (!validation.isValid) {
         return sendValidationError(res, validation.errors, 'Préstamo');
     }
     
     try {
-        const result = await prestamosModel.createPrestamo(prestamo, req.user);
+        const result = await prestamosModel.createPrestamo(cleanPrestamo, req.user);
         
         if (result.error) {
             logger.warn('PRESTAMOS', 'CREATE', 'Error de validación del modelo', { error: result.error });
@@ -139,8 +169,8 @@ exports.createPrestamo = async (req, res) => {
         
         logger.crud('prestamos', 'CREATE', null, `Préstamo creado exitosamente`, {
             prestamoId: result.insertId,
-            socioId: prestamo.SOCIO_ID,
-            materialId: prestamo.MATERIAL_ID
+            socioId: cleanPrestamo.SOCIO_ID,
+            materialId: cleanPrestamo.MATERIAL_ID
         });
         
         res.status(201).json({ 
@@ -186,6 +216,9 @@ exports.updatePrestamo = async (req, res) => {
     const { id } = req.params;
     const prestamo = req.body;
     
+    console.log('🔍 CONTROLLER UPDATE PRESTAMO - Raw body:', JSON.stringify(req.body, null, 2));
+    console.log('🔍 CONTROLLER UPDATE PRESTAMO - Prestamo object:', JSON.stringify(prestamo, null, 2));
+    
     logger.crud('prestamos', 'UPDATE', id, 'Iniciando actualización de préstamo', {
         socioId: prestamo.SOCIO_ID,
         materialId: prestamo.MATERIAL_ID,
@@ -193,30 +226,65 @@ exports.updatePrestamo = async (req, res) => {
     });
 
     // ==========================================
+    // LIMPIEZA Y NORMALIZACIÓN DE DATOS
+    // ==========================================
+    const cleanPrestamo = {
+        SOCIO_ID: prestamo.SOCIO_ID && prestamo.SOCIO_ID !== '' ? parseInt(prestamo.SOCIO_ID) : null,
+        MATERIAL_ID: prestamo.MATERIAL_ID && prestamo.MATERIAL_ID !== '' ? parseInt(prestamo.MATERIAL_ID) : null,
+        NUMERO_ID: prestamo.NUMERO_ID && prestamo.NUMERO_ID !== '' ? parseInt(prestamo.NUMERO_ID) : null,
+        BIBLIOTECARIO_ID: prestamo.BIBLIOTECARIO_ID && prestamo.BIBLIOTECARIO_ID !== '' ? parseInt(prestamo.BIBLIOTECARIO_ID) : null,
+        TIPO_PRESTAMO: prestamo.TIPO_PRESTAMO || 'I',
+        FECHA_PRESTAMO: prestamo.FECHA_PRESTAMO || null,
+        LIMITE_DEVOLUCION: prestamo.LIMITE_DEVOLUCION || null,
+        COMENTARIO: prestamo.COMENTARIO || null,
+        DEVOLUCION: prestamo.DEVOLUCION || null,
+        ESTADO_DEVOLUCION: prestamo.ESTADO_DEVOLUCION || null,
+        COMENTARIO_ESTADO: prestamo.COMENTARIO_ESTADO || null
+    };
+
+    // ==========================================
     // VALIDACIÓN CON HELPER REUTILIZABLE
     // ==========================================
-    const validation = validatePrestamo(prestamo);
+    const validation = validatePrestamo(cleanPrestamo);
     if (!validation.isValid) {
         return sendValidationError(res, validation.errors, 'Préstamo');
     }
     
     try {
-        const result = await prestamosModel.updatePrestamo(id, prestamo);
+        // ==========================================
+        // DEBUGGING - VERIFICAR AUTENTICACIÓN
+        // ==========================================
+        console.log('🔍 CONTROLLER UPDATE PRESTAMO - req.user:', req.user);
+        console.log('🔍 CONTROLLER UPDATE PRESTAMO - req.headers.authorization:', req.headers.authorization);
+        
+        // Pasar información del bibliotecario autenticado al modelo
+        const bibliotecario = req.user ? {
+            id: req.user.id,
+            usuario: req.user.usuario
+        } : { id: 1, usuario: 'dba' }; // Fallback para DBA
+
+        console.log('🔍 CONTROLLER UPDATE PRESTAMO - Bibliotecario final:', bibliotecario);
+        logger.debug('PRESTAMOS', `UPDATE ID:${id}`, 'Bibliotecario extraído del token', { bibliotecario });
+
+        // ==========================================
+        // ACTUALIZACIÓN DE PRÉSTAMO
+        // ==========================================
+        const result = await prestamosModel.updatePrestamo(id, cleanPrestamo, bibliotecario);
         
         if (!result || result.affectedRows === 0) {
-            logger.warn('PRESTAMOS', `UPDATE ID:${id}`, 'Préstamo no encontrado para actualizar');
-            return res.status(404).json({ message: 'Préstamo no encontrado' });
+            logger.warn('PRESTAMOS', `UPDATE ID:${id}`, 'Préstamo no encontrado para actualizar o no se realizaron cambios');
+            return res.status(404).json({ message: 'Préstamo no encontrado o no se realizaron cambios' });
         }
         
         logger.crud('prestamos', 'UPDATE', id, `Préstamo actualizado exitosamente`, {
-            socioId: prestamo.SOCIO_ID,
-            materialId: prestamo.MATERIAL_ID
+            socioId: cleanPrestamo.SOCIO_ID,
+            materialId: cleanPrestamo.MATERIAL_ID
         });
         
         res.json({ message: 'Préstamo actualizado correctamente' });
     } catch (error) {
         logger.crudError('prestamos', 'UPDATE', id, error, {
-            datosRecibidos: { SOCIO_ID: prestamo.SOCIO_ID, MATERIAL_ID: prestamo.MATERIAL_ID }
+            datosRecibidos: { SOCIO_ID: cleanPrestamo.SOCIO_ID, MATERIAL_ID: cleanPrestamo.MATERIAL_ID }
         });
         
         // Extraer mensaje amigable del error ODBC/SQL

@@ -15,7 +15,7 @@ const path = require('path');                 // Utilidades para rutas de archiv
 // ==========================================
 // 2. CARGAR CONFIGURACIÓN DE ENTORNO
 // ==========================================
-require('dotenv').config();                   // Variables de entorno desde .env
+require('dotenv').config();              // Variables de entorno desde .env
 
 // ==========================================
 // 3. IMPORTAR TODAS LAS RUTAS DE LA API

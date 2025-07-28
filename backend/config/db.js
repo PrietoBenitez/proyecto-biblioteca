@@ -12,7 +12,7 @@
  * - Manejo de errores de conexión
  * - Variables de entorno para seguridad
  * 
- * Autor: Sistema BiblioTech
+ * Autor: Sistema GestLib
  * =========================================
  */
 
@@ -60,4 +60,4 @@ async function getConnection() {
 // ==========================================
 // 4. EXPORTAR FUNCIÓN DE CONEXIÓN
 // ==========================================
-module.exports = { getConnection };
+module.exports = { getConnection }; 

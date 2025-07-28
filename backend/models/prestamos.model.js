@@ -5,6 +5,7 @@ async function getAllPrestamos() {
     const db = await getConnection();
     const result = await db.query(`
         SELECT p.*, 
+            p.NUMERO_ID AS MATERIAL_ID, 
             s.NOMBRE AS NOMBRE_SOCIO, s.APELLIDO AS APELLIDO_SOCIO,
             m.NOMBRE AS NOMBRE_MATERIAL,
             b.NOMBRE AS NOMBRE_BIBLIOTECARIO, b.APELLIDO AS APELLIDO_BIBLIOTECARIO
@@ -23,6 +24,7 @@ async function getPrestamoById(id) {
     const db = await getConnection();
     const result = await db.query(`
         SELECT p.*, 
+            p.NUMERO_ID AS MATERIAL_ID, 
             s.NOMBRE AS NOMBRE_SOCIO, s.APELLIDO AS APELLIDO_SOCIO,
             m.NOMBRE AS NOMBRE_MATERIAL,
             b.NOMBRE AS NOMBRE_BIBLIOTECARIO, b.APELLIDO AS APELLIDO_BIBLIOTECARIO
@@ -36,25 +38,38 @@ async function getPrestamoById(id) {
     return Array.isArray(result.rows) ? result.rows[0] : result[0];
 }
 
-// Utilidad para convertir string vacío a null
+// Utilidad para convertir valores a null o tipos apropiados
 function toNull(v) {
-    return v === '' ? null : v;
+    if (v === '' || v === undefined || v === 'undefined' || v === 'null' || v === null) return null;
+    if (typeof v === 'string' && v.trim() === '') return null;
+    return v;
+}
+
+// Utilidad para convertir a entero o null
+function toInt(v) {
+    if (v === '' || v === undefined || v === 'undefined' || v === 'null' || v === null) return null;
+    if (typeof v === 'string' && v.trim() === '') return null;
+    const num = parseInt(v);
+    return isNaN(num) ? null : num;
 }
 // Utilidad para formatear fecha a 'YYYY-MM-DD HH:MM:SS' si es solo 'YYYY-MM-DD'
 function toDateTimeString(v) {
-    if (!v) return null;
-    if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)) {
-        return v + ' 00:00:00';
+    if (!v || v === null || v === undefined || v === '' || v === 'null') return null;
+    if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v.trim())) {
+        return v.trim() + ' 00:00:00';
     }
-    return v;
+    if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(v.trim())) {
+        return v.trim();
+    }
+    return null;
 }
 // Utilidad para formatear solo fecha a 'YYYY-MM-DD'
 function toDateString(v) {
-    if (!v) return null;
-    if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v)) {
-        return v.slice(0, 10);
+    if (!v || v === null || v === undefined || v === '' || v === 'null') return null;
+    if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v.trim())) {
+        return v.trim().slice(0, 10);
     }
-    return v;
+    return null;
 }
 
 // Crear préstamo
@@ -94,7 +109,7 @@ async function createPrestamo(data, bibliotecario = null) {
         
         // Validar si ya existe un préstamo activo para el material
         const checkQuery = `SELECT PRESTAMO_ID FROM PRESTAMOS WHERE NUMERO_ID = ? AND DEVOLUCION IS NULL`;
-        const checkResult = await db.query(checkQuery, [toNull(data.NUMERO_ID)]);
+        const checkResult = await db.query(checkQuery, [toInt(data.MATERIAL_ID || data.NUMERO_ID)]);
         if (Array.isArray(checkResult.rows) ? checkResult.rows.length > 0 : checkResult.length > 0) {
             await db.close();
             // Retornar error específico para el controlador
@@ -106,9 +121,9 @@ async function createPrestamo(data, bibliotecario = null) {
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const values = [
-        toNull(data.SOCIO_ID),
-        toNull(data.BIBLIOTECARIO_ID),
-        toNull(data.NUMERO_ID), // NUMERO_ID es el ID del material
+        toInt(data.SOCIO_ID),
+        toInt(data.BIBLIOTECARIO_ID),
+        toInt(data.MATERIAL_ID || data.NUMERO_ID), // Soporte para ambos nombres
         toNull(data.TIPO_PRESTAMO) || 'I',
         toDateTimeString(toNull(data.FECHA_PRESTAMO)) || null,
         toNull(data.COMENTARIO) || null,
@@ -117,6 +132,19 @@ async function createPrestamo(data, bibliotecario = null) {
         toNull(data.ESTADO_DEVOLUCION) || null,
         toNull(data.COMENTARIO_ESTADO) || null
     ];
+    
+    console.log('🔍 MODEL CREATE PRESTAMO - Query:', insertQuery);
+    console.log('🔍 MODEL CREATE PRESTAMO - Values:', values);
+    console.log('🔍 MODEL CREATE PRESTAMO - Types:', values.map(v => typeof v));
+    console.log('🔍 MODEL CREATE PRESTAMO - Raw data:', {
+        SOCIO_ID: data.SOCIO_ID,
+        BIBLIOTECARIO_ID: data.BIBLIOTECARIO_ID,
+        MATERIAL_ID: data.MATERIAL_ID,
+        NUMERO_ID: data.NUMERO_ID,
+        TIPO_PRESTAMO: data.TIPO_PRESTAMO,
+        FECHA_PRESTAMO: data.FECHA_PRESTAMO,
+        LIMITE_DEVOLUCION: data.LIMITE_DEVOLUCION
+    });
     
     // console.log('🔍 MODEL CREATE PRESTAMO - Query:', insertQuery);
     // console.log('🔍 MODEL CREATE PRESTAMO - Values:', values);
@@ -135,8 +163,43 @@ async function createPrestamo(data, bibliotecario = null) {
 }
 
 // Actualizar préstamo
-async function updatePrestamo(id, data) {
+async function updatePrestamo(id, data, bibliotecario = null) {
     const db = await getConnection();
+    
+    console.log('🔍 MODEL UPDATE PRESTAMO - ID:', id);
+    console.log('🔍 MODEL UPDATE PRESTAMO - Datos:', JSON.stringify(data, null, 2));
+    console.log('🔍 MODEL UPDATE PRESTAMO - Bibliotecario:', bibliotecario);
+    
+    try {
+        // Establecer contexto de bibliotecario para el trigger modificado
+        if (bibliotecario) {
+            try {
+                const bibliotecarioId = bibliotecario.id || 1;
+                console.log('🔍 MODEL UPDATE PRESTAMO - Configurando contexto para bibliotecario:', bibliotecarioId);
+                
+                // Usar el mismo enfoque que createPrestamo
+                try {
+                    await db.query(`
+                        CREATE OR REPLACE GLOBAL TEMPORARY TABLE bibliotecario_context (
+                            bibliotecario_id INTEGER
+                        ) ON COMMIT PRESERVE ROWS
+                    `);
+                } catch (tableError) {
+                    console.log('⚠️ MODEL UPDATE PRESTAMO - Tabla ya existe, continuando...');
+                }
+                
+                // Insertar el ID del bibliotecario actual
+                await db.query(`DELETE FROM bibliotecario_context`);
+                await db.query(`INSERT INTO bibliotecario_context (bibliotecario_id) VALUES (?)`, [bibliotecarioId]);
+                console.log('✅ MODEL UPDATE PRESTAMO - Contexto bibliotecario configurado:', bibliotecarioId);
+            } catch (ctxError) {
+                console.log('⚠️ No se pudo establecer contexto de bibliotecario:', ctxError.message);
+            }
+        }
+    } catch (dbSetupError) {
+        console.log('⚠️ Error al preparar contexto de biblioteca:', dbSetupError.message);
+    }
+    
     const updateQuery = `
         UPDATE PRESTAMOS SET
             SOCIO_ID = ?,
@@ -152,9 +215,9 @@ async function updatePrestamo(id, data) {
         WHERE PRESTAMO_ID = ?
     `;
     const values = [
-        toNull(data.SOCIO_ID),
-        toNull(data.BIBLIOTECARIO_ID),
-        toNull(data.NUMERO_ID),
+        toInt(data.SOCIO_ID),
+        toInt(data.BIBLIOTECARIO_ID),
+        toInt(data.MATERIAL_ID || data.NUMERO_ID), // Soporte para ambos nombres
         toNull(data.TIPO_PRESTAMO) || 'I',
         toDateTimeString(toNull(data.FECHA_PRESTAMO)) || null,
         toNull(data.COMENTARIO) || null,
@@ -162,8 +225,13 @@ async function updatePrestamo(id, data) {
         toDateString(toNull(data.DEVOLUCION)) || null, // SOLO fecha para DEVOLUCION
         toNull(data.ESTADO_DEVOLUCION) || null,
         toNull(data.COMENTARIO_ESTADO) || null,
-        id
+        toInt(id)
     ];
+    
+    console.log('🔍 MODEL UPDATE PRESTAMO - Query:', updateQuery);
+    console.log('🔍 MODEL UPDATE PRESTAMO - Values:', values);
+    console.log('🔍 MODEL UPDATE PRESTAMO - Types:', values.map(v => typeof v));
+    
     const result = await db.query(updateQuery, values);
     await db.close();
     return { affectedRows: result.count || result.affectedRows || 0 };

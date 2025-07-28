@@ -7,6 +7,15 @@ function formatearFechaDMY(fechaStr) {
     return `${dia}/${mes}/${anio}`;
 }
 
+// Convierte el tipo de préstamo de código a texto
+function formatearTipoPrestamo(tipo) {
+    switch(tipo) {
+        case 'I': return 'INTERNO';
+        case 'E': return 'EXTERNO';
+        default: return tipo || '';
+    }
+}
+
 
 document.addEventListener('DOMContentLoaded', () => {
     cargarPrestamos();
@@ -109,7 +118,7 @@ function mostrarPrestamos(prestamos) {
             <td>${prestamo.NOMBRE_SOCIO || ''} ${prestamo.APELLIDO_SOCIO || ''}</td>
             <td>${prestamo.NOMBRE_MATERIAL || ''}</td>
             <td>${prestamo.NOMBRE_BIBLIOTECARIO || ''} ${prestamo.APELLIDO_BIBLIOTECARIO || ''}</td>
-            <td>${prestamo.TIPO_PRESTAMO || ''}</td>
+            <td>${formatearTipoPrestamo(prestamo.TIPO_PRESTAMO)}</td>
             <td>${prestamo.FECHA_PRESTAMO ? formatearFechaDMY(prestamo.FECHA_PRESTAMO) : ''}</td>
             <td>${prestamo.LIMITE_DEVOLUCION ? formatearFechaDMY(prestamo.LIMITE_DEVOLUCION) : ''}</td>
             <td>${prestamo.DEVOLUCION ? formatearFechaDMY(prestamo.DEVOLUCION) : ''}</td>
@@ -224,7 +233,7 @@ function guardarPrestamo(e) {
     }
     const data = {
         SOCIO_ID: socio_id,
-        NUMERO_ID: numero_id,
+        MATERIAL_ID: numero_id,
         BIBLIOTECARIO_ID: bibliotecario_id,
         TIPO_PRESTAMO: tipo_prestamo,
         FECHA_PRESTAMO: fecha_prestamo,
@@ -289,7 +298,7 @@ function editarPrestamo(id) {
             
             document.getElementById('prestamo-id').value = prestamo.PRESTAMO_ID;
             document.getElementById('socio-select').value = prestamo.SOCIO_ID;
-            document.getElementById('material-select').value = prestamo.NUMERO_ID;
+            document.getElementById('material-select').value = prestamo.MATERIAL_ID;
             document.getElementById('bibliotecario-select').value = prestamo.BIBLIOTECARIO_ID;
             document.getElementById('tipo-prestamo').value = prestamo.TIPO_PRESTAMO || 'I';
             let fechaPrestamo = '';
@@ -490,9 +499,11 @@ const mensajesTriggers = {
     'el socio ha alcanzado el límite de préstamos permitidos para su rango/categoría.': 'Límite de préstamos alcanzado para el rango/categoría del socio.',
     'el socio no cumple con la antigüedad mínima requerida para realizar préstamos.': 'El socio no cumple la antigüedad mínima para realizar préstamos.',
     'este material es restringido y solo puede ser prestado a socios internos.': 'Material restringido: solo socios internos pueden solicitarlo.',
+    'los préstamos internos solo pueden realizarse con materiales restringidos.': 'Los préstamos internos requieren materiales restringidos.',
     'no cumple con las condiciones para prestar este material restringido.': 'No cumples con las condiciones para este material restringido.',
     'se ha aplicado una sanción por devolución tardía.': 'Atención: se aplicó una sanción por devolución tardía.',
-    'el socio ya tiene el máximo de sanciones permitidas.': 'El socio ya tiene el máximo de sanciones permitidas.'
+    'el socio ya tiene el máximo de sanciones permitidas.': 'El socio ya tiene el máximo de sanciones permitidas.',
+    'los préstamos internos o restringidos deben devolverse en el día.': 'Error de configuración: Verifica que el material y tipo de préstamo sean compatibles.'
 };
 
 // =================== FUNCIONALIDAD DE SANCIONES ===================

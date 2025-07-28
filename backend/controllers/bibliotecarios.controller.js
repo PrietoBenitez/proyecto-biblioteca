@@ -7,7 +7,7 @@ const logger = require('../utils/logger');
 const { validateBibliotecario, sendValidationError } = require('../utils/validation');
 
 // ==========================================
-// FUNCIÓN DE REGISTRO (LEGACY)
+// FUNCIÓN DE REGISTRO 
 // ==========================================
 exports.registrar = async (req, res) => {
     const { usuario, privilegios, nombre, contrasena, cedula, apellido } = req.body;
